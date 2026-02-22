@@ -5,6 +5,15 @@
 
 set -euo pipefail
 
+usage() {
+    echo "Usage: $(basename "$0") [-h]"
+    echo "Creates a timestamped backup of AgentOrg knowledge, config, skills, and workspaces."
+    echo "Keeps the last $MAX_BACKUPS backups."
+    exit 0
+}
+
+[[ "${1:-}" == "-h" || "${1:-}" == "--help" ]] && MAX_BACKUPS=10 && usage
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BACKUP_DIR="$PROJECT_DIR/backups"

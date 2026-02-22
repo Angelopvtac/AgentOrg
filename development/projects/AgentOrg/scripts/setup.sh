@@ -15,10 +15,13 @@ echo ""
 # --- Step 1: Check prerequisites ---
 echo "[1/6] Checking prerequisites..."
 
-if ! command -v docker &>/dev/null; then
-    echo "  ERROR: Docker is not installed. Install Docker first."
-    exit 1
-fi
+for prereq in docker openssl curl; do
+    if ! command -v "$prereq" &>/dev/null; then
+        echo "  ERROR: '$prereq' is not installed."
+        echo "  Install it with your package manager (e.g., apt install $prereq)"
+        exit 1
+    fi
+done
 echo "  Docker: $(docker --version | head -1)"
 
 if ! docker compose version &>/dev/null; then
