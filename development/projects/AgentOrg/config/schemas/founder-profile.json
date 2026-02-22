@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Founder Profile",
+  "description": "Schema for the founder profile populated during L0 onboarding",
+  "type": "object",
+  "properties": {
+    "personalInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Founder's preferred name"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone identifier (e.g., America/New_York)"
+        },
+        "location": {
+          "type": ["string", "null"],
+          "description": "General location (city/region, optional)"
+        },
+        "communicationStyle": {
+          "type": "string",
+          "enum": ["concise", "detailed", "casual", "formal"],
+          "description": "Preferred communication style for agent interactions"
+        },
+        "language": {
+          "type": "string",
+          "default": "en",
+          "description": "Preferred language code"
+        }
+      },
+      "required": ["name", "timezone", "communicationStyle"]
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Skill or interest name"
+          },
+          "level": {
+            "type": "string",
+            "enum": ["beginner", "intermediate", "advanced", "expert"],
+            "description": "Self-assessed proficiency level"
+          },
+          "relevance": {
+            "type": "string",
+            "description": "How this skill relates to business goals"
+          }
+        },
+        "required": ["name", "level"]
+      },
+      "minItems": 3,
+      "description": "Founder's skills and interests relevant to the business"
+    },
+    "availability": {
+      "type": "object",
+      "properties": {
+        "weeklyHours": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 168,
+          "description": "Hours per week the founder can dedicate"
+        },
+        "preferredDays": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+          },
+          "description": "Preferred working days"
+        },
+        "quietHours": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+              "description": "Quiet hours start (HH:MM in founder's timezone)"
+            },
+            "end": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+              "description": "Quiet hours end (HH:MM in founder's timezone)"
+            }
+          },
+          "required": ["start", "end"],
+          "description": "Do-not-disturb window"
+        },
+        "responseExpectation": {
+          "type": "string",
+          "enum": ["immediate", "same-day", "next-day", "async"],
+          "description": "How quickly the founder expects to respond to agent queries"
+        }
+      },
+      "required": ["weeklyHours", "quietHours"]
+    },
+    "financial": {
+      "type": "object",
+      "properties": {
+        "dailyBudget": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Maximum daily AI spend in USD"
+        },
+        "riskTolerance": {
+          "type": "string",
+          "enum": ["conservative", "moderate", "aggressive"],
+          "description": "Approach to financial risk and experimentation"
+        },
+        "investmentCapacity": {
+          "type": "string",
+          "enum": ["bootstrapped", "small-budget", "moderate-budget", "well-funded"],
+          "description": "Overall investment capacity for the venture"
+        },
+        "revenueGoal": {
+          "type": ["number", "null"],
+          "description": "Monthly revenue target in USD (null if not yet defined)"
+        }
+      },
+      "required": ["dailyBudget", "riskTolerance"]
+    },
+    "goals": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "string",
+          "description": "Primary business goal (1-2 sentences)"
+        },
+        "timeline": {
+          "type": "string",
+          "enum": ["1-month", "3-months", "6-months", "1-year", "no-rush"],
+          "description": "Desired timeline to meaningful progress"
+        },
+        "successMetric": {
+          "type": "string",
+          "description": "How the founder defines success"
+        },
+        "interests": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Business areas or industries of interest"
+        }
+      },
+      "required": ["primary", "timeline", "successMetric"]
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "decisionStyle": {
+          "type": "string",
+          "enum": ["hands-on", "delegate-with-review", "fully-autonomous"],
+          "description": "How much control the founder wants over decisions"
+        },
+        "updateFrequency": {
+          "type": "string",
+          "enum": ["real-time", "daily-digest", "weekly-summary"],
+          "description": "How often the founder wants status updates"
+        },
+        "notificationChannels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Preferred notification channels"
+        },
+        "emojiUse": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether agents should use emojis in communication"
+        }
+      },
+      "required": ["decisionStyle", "updateFrequency"]
+    },
+    "vision": {
+      "type": "object",
+      "properties": {
+        "statement": {
+          "type": "string",
+          "minLength": 50,
+          "description": "Co-created vision statement (at least 2 sentences)"
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Core values for the venture"
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Hard constraints or things to avoid"
+        },
+        "iterationCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "How many iterations the vision went through"
+        }
+      },
+      "required": ["statement"]
+    }
+  },
+  "required": ["personalInfo", "skills", "availability", "financial", "goals", "preferences", "vision"]
+}
