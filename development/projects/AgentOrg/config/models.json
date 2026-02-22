@@ -1,0 +1,86 @@
+{
+  "tiers": {
+    "1": {
+      "name": "Triage",
+      "model": "openrouter/anthropic/claude-haiku-4.5",
+      "description": "Routing, status checks, simple operations",
+      "costPerMillionTokens": {
+        "input": 0.80,
+        "output": 4.00
+      }
+    },
+    "2": {
+      "name": "Execution",
+      "model": "openrouter/anthropic/claude-sonnet-4.6",
+      "description": "Content generation, conversations, analysis",
+      "costPerMillionTokens": {
+        "input": 3.00,
+        "output": 15.00
+      }
+    },
+    "3": {
+      "name": "Strategic",
+      "model": "openrouter/anthropic/claude-opus-4.6",
+      "description": "Gate evaluations, audits, strategy decisions",
+      "costPerMillionTokens": {
+        "input": 15.00,
+        "output": 75.00
+      }
+    }
+  },
+  "agentDefaults": {
+    "orchestrator": {
+      "defaultTier": 1,
+      "escalation": {
+        "gateEvaluation": 3,
+        "budgetDecision": 3,
+        "phaseTransition": 3,
+        "routing": 1
+      }
+    },
+    "core-assistant": {
+      "defaultTier": 2,
+      "escalation": {
+        "onboarding": 2,
+        "conversation": 2,
+        "complexExplanation": 2
+      }
+    }
+  },
+  "escalationCriteria": {
+    "toTier2": [
+      "Task requires content generation or analysis",
+      "Conversation with founder",
+      "Multi-step reasoning needed"
+    ],
+    "toTier3": [
+      "Gate evaluation or phase transition",
+      "Financial decision or budget override",
+      "Audit or verification task",
+      "Strategic planning or pivot evaluation"
+    ]
+  },
+  "providers": [
+    {
+      "id": "openrouter",
+      "name": "OpenRouter",
+      "role": "primary",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "authEnvVar": "OPENROUTER_API_KEY"
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic Direct",
+      "role": "optional",
+      "baseUrl": "https://api.anthropic.com",
+      "authEnvVar": "ANTHROPIC_API_KEY"
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama Local",
+      "role": "optional",
+      "baseUrl": "http://localhost:11434",
+      "authEnvVar": "OLLAMA_BASE_URL"
+    }
+  ]
+}
