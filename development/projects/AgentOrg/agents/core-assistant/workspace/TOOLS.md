@@ -21,6 +21,7 @@ All vault files are at `/home/node/.openclaw/vault/`.
 | `vault/founder-profile.json` | Founder profile data |
 | `vault/onboarding-state.json` | Onboarding progress |
 | `vault/economics/daily-budget.json` | Budget status (read-only) |
+| `vault/briefing-state.json` | Latest briefing content and history (read-only) |
 
 ## Vault Paths — Write Access
 
@@ -55,6 +56,42 @@ Only send to the orchestrator. Messages you send:
 - Founder operational requests (budget changes, status requests, etc.)
 - Profile update notifications
 
-## Skills — Read Only
+## Skills
 
-Knowledge graph and human task queue access planned for future phases.
+All shared skills at `/home/node/.openclaw/skills/`.
+
+### Knowledge Graph (`skills/knowledge-graph`)
+
+Read all collections. Write access to `insights` only.
+
+| Tool | Access | Collections |
+|------|--------|-------------|
+| `kg_store` | write | insights only |
+| `kg_read` | read | decisions, insights, lessons |
+| `kg_search` | read | decisions, insights, lessons |
+| `kg_list` | read | decisions, insights, lessons |
+
+**Vault paths:**
+
+| Path | Access |
+|------|--------|
+| `vault/decisions.json` | read |
+| `vault/insights.json` | read/write |
+| `vault/lessons.json` | read |
+
+### Human Task Queue (`skills/human-task-queue`)
+
+Read access and create only. Cannot complete tasks (founder action).
+
+| Tool | Access |
+|------|--------|
+| `htq_create` | Create tasks for the founder |
+| `htq_list` | List and filter tasks |
+| `htq_complete` | **no access** |
+| `htq_digest` | Generate pending task summary |
+
+**Vault paths:**
+
+| Path | Access |
+|------|--------|
+| `vault/human-tasks.json` | read, append (create only) |

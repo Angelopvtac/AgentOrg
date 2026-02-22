@@ -21,7 +21,7 @@ echo ""
 
 # Build list of paths to back up
 PATHS_TO_BACKUP=()
-for path in knowledge config agents/orchestrator/workspace agents/core-assistant/workspace; do
+for path in knowledge config skills agents/orchestrator/workspace agents/core-assistant/workspace; do
     if [ -d "$PROJECT_DIR/$path" ]; then
         PATHS_TO_BACKUP+=("$path")
     fi

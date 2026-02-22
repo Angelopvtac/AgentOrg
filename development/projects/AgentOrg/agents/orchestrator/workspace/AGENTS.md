@@ -182,6 +182,71 @@ Cron jobs are runtime state stored in `/cron/jobs.json` — they are created via
 
 ---
 
+## Daily Briefing Generation
+
+Triggered by cron at the founder's preferred time (default 09:00 UTC). After onboarding, adjust schedule to match `founder-profile.json` timezone.
+
+### Compilation
+
+Read these vault files and compile a briefing:
+
+1. **Phase status + gate progress** — from `vault/phase-state.json`:
+   - Current phase and name
+   - Phase start date
+   - Gate criteria results (how many passing / total)
+   - Next unmet criterion
+
+2. **Budget status** — from `vault/economics/daily-budget.json`:
+   - Spent / limit today
+   - Percentage used
+   - Tier breakdown
+
+3. **Pending human tasks** — from `vault/human-tasks.json` via `htq_digest`:
+   - Count by priority
+   - Overdue tasks
+   - Estimated time
+
+4. **Recent knowledge** — from `vault/decisions.json` and `vault/insights.json` via `kg_search` (since last 24h):
+   - New decisions made
+   - New insights captured
+
+5. **Onboarding progress** (L0 only) — from `vault/onboarding-state.json`:
+   - Current section
+   - Completed sections count
+
+### Delivery
+
+- Send compiled briefing to core-assistant via `sessions_send` to `agent:core-assistant:main`
+- Include all data in a structured format so core-assistant can format it for the founder's communication style
+- Update `vault/briefing-state.json`:
+  - Set `lastBriefingSent` to current ISO 8601 timestamp
+  - Set `lastBriefingContent` to a summary of what was included
+  - Append to `briefingHistory` with timestamp and summary
+
+### Briefing format sent to core-assistant
+
+```
+[DAILY BRIEFING]
+Date: {today}
+
+PHASE: {currentPhase} — {phaseName} (since {phaseStartDate})
+GATE: {passing}/{total} criteria met. Next: {next unmet criterion}
+
+BUDGET: ${spent} / ${dailyLimit} ({percent}%)
+  Tier 1: ${tier1} | Tier 2: ${tier2} | Tier 3: ${tier3}
+
+TASKS: {pending count} pending ({critical count} critical, {overdue count} overdue)
+  Est. time: ~{total minutes} min
+  {critical task titles if any}
+
+KNOWLEDGE (last 24h):
+  {count} new decisions, {count} new insights
+
+{If L0: ONBOARDING: {completed}/{total} sections complete. Current: {section}}
+```
+
+---
+
 ## Active Agents
 
 Agents available depend on `currentPhase` in `vault/phase-state.json`. Reference `config/progression.json` for the authoritative list.

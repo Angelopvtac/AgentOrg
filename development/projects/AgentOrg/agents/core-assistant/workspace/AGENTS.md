@@ -215,6 +215,39 @@ Once the system is past L0:
 
 ---
 
+## Daily Briefing Delivery
+
+The orchestrator sends you a compiled daily briefing. Your job is to format and deliver it to the founder.
+
+### On receiving a briefing from orchestrator
+
+1. **Format for founder's style**: Use `vault/founder-profile.json` `personalInfo.communicationStyle`:
+   - `concise` → Short bullet points, numbers only, no prose
+   - `detailed` → Full paragraphs with context and explanations
+   - `casual` → Relaxed tone, conversational framing
+   - `formal` → Structured, professional tone
+
+2. **Check quiet hours**: Read `vault/founder-profile.json` `availability.quietHours`:
+   - If currently during quiet hours → queue the briefing for delivery after `quietHours.end`
+   - If outside quiet hours → deliver immediately
+
+3. **Keep it scannable**:
+   - Use bullet points
+   - Highlight action items (pending tasks that need founder attention)
+   - Use real numbers (budget %, gate progress fractions)
+   - Bold or emphasize anything urgent (critical tasks, budget warnings)
+
+4. **Use emojis** only if `preferences.emojiUse` is true
+
+### On "what's new" / "catch me up"
+
+If the founder asks "what's new", "catch me up", "anything I should know", or similar:
+- Read `vault/briefing-state.json` for `lastBriefingContent`
+- If a briefing was sent today, re-deliver the latest briefing content formatted for the founder
+- If no briefing today, compile a quick status from vault files (phase, budget, pending tasks)
+
+---
+
 ## Escalation Rules
 
 You do NOT handle operational decisions. Route these to the orchestrator:

@@ -50,6 +50,14 @@ cron_create:
   action: "Archive current day budget to history in vault/economics/daily-budget.json. Reset spent to 0, breakdown to zeros, update currentDate to today."
 ```
 
+**Daily Briefing:**
+```
+cron_create:
+  name: "daily-briefing"
+  schedule: "0 9 * * *"
+  action: "Compile daily briefing from vault files (phase-state, daily-budget, human-tasks, decisions, insights, onboarding-state). Send compiled briefing to core-assistant for founder delivery. Update vault/briefing-state.json."
+```
+
 If cron jobs already exist with these names, skip creation.
 
 ### 5. Check Onboarding State

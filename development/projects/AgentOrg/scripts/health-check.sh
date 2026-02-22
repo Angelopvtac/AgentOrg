@@ -69,6 +69,37 @@ for agent in orchestrator core-assistant; do
     done
 done
 
+# --- Vault Files ---
+echo ""
+echo "Vault (knowledge/):"
+VAULT_FILES=(
+    "phase-state.json"
+    "founder-profile.json"
+    "onboarding-state.json"
+    "economics/daily-budget.json"
+    "decisions.json"
+    "insights.json"
+    "lessons.json"
+    "human-tasks.json"
+    "briefing-state.json"
+)
+for vfile in "${VAULT_FILES[@]}"; do
+    check "$vfile exists" test -f "$PROJECT_DIR/knowledge/$vfile"
+    check_shell "$vfile valid JSON" "python3 -c \"import json; json.load(open('$PROJECT_DIR/knowledge/$vfile'))\""
+done
+
+# --- Config Schemas ---
+echo ""
+echo "Config Schemas:"
+check "progression.json exists" test -f "$PROJECT_DIR/config/progression.json"
+check_shell "progression.json valid JSON" "python3 -c \"import json; json.load(open('$PROJECT_DIR/config/progression.json'))\""
+
+# --- Skills ---
+echo ""
+echo "Skills:"
+check "knowledge-graph/SKILL.md" test -f "$PROJECT_DIR/skills/knowledge-graph/SKILL.md"
+check "human-task-queue/SKILL.md" test -f "$PROJECT_DIR/skills/human-task-queue/SKILL.md"
+
 # --- Disk Usage ---
 echo ""
 echo "Disk:"

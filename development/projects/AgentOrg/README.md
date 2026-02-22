@@ -60,7 +60,8 @@ The gateway control UI is accessible at `http://localhost:18791`.
 | `agents/orchestrator/` | CEO agent — routing, decisions, phase management |
 | `agents/core-assistant/` | Founder interface — conversations, onboarding |
 | `knowledge/` | Shared vault — persistent data for all agents |
-| `skills/` | Shared skill definitions |
+| `skills/knowledge-graph/` | Institutional memory: decisions, insights, lessons |
+| `skills/human-task-queue/` | Founder task tracking with priorities and quiet hours |
 | `workflows/` | Lobster pipeline definitions |
 | `dashboards/` | Founder-facing HTML dashboards |
 | `templates/` | Business-type starter templates |
@@ -98,6 +99,19 @@ AgentOrg uses a progressive phase system. New agents and capabilities unlock as 
 
 ## Current Status
 
-**Sprint 1 complete** — Project scaffolded, gateway deployable, two placeholder agents configured.
+**Sprint 3 complete** — Full system operational.
 
-Next: Sprint 2 (Orchestrator & Core Assistant full system prompts, onboarding flow).
+| Sprint | Scope | Status |
+|--------|-------|--------|
+| 1 | Project scaffold, gateway config, agent workspace structure | Done |
+| 2 | Orchestrator brain (routing, budget, gates, phase transitions), core-assistant onboarding flow (9 sections) | Done |
+| 3 | E2E validation, Knowledge Graph skill, Human Task Queue skill, Daily Briefing system | Done |
+
+### What's working:
+- Orchestrator routes messages, enforces budget, evaluates L0 gate (6 criteria), manages phase transitions
+- Core-assistant guides founder through 9-section onboarding with vault persistence
+- Knowledge Graph stores decisions, insights, and lessons with search/filter
+- Human Task Queue tracks founder action items with priority and quiet hours
+- Daily Briefing compiles status from all vault files and delivers via core-assistant
+- Cron jobs: daily gate check, daily budget reset, daily briefing
+- Health checks, backups, and full vault structure validated

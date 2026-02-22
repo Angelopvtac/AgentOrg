@@ -34,7 +34,13 @@ On each heartbeat, perform the following in order:
 - If `status` == "complete" and last gate evaluation was > 1 hour ago → run gate evaluation
 - Log results to `vault/phase-state.json`
 
-### 6. Queued Agent Messages
+### 6. Daily Briefing Check
+- Read `vault/briefing-state.json`
+- If `lastBriefingSent` is null or not today's date, and it's past the scheduled briefing time (09:00 founder TZ, default UTC):
+  - Trigger daily briefing generation (see Daily Briefing Generation in AGENTS.md)
+  - This catches missed briefings from cron failures or gateway restarts
+
+### 7. Queued Agent Messages
 - Process any pending agent-to-agent messages
 - Route responses back to originating agents
 
@@ -48,3 +54,4 @@ On each heartbeat, perform the following in order:
 | Onboarding complete + gate not recently evaluated | Run gate evaluation |
 | Agent unresponsive | Log and attempt recovery |
 | Phase transition criteria met | Trigger phase transition protocol |
+| Briefing not sent today + past scheduled time | Generate and send daily briefing |

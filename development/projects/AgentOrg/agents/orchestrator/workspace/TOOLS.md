@@ -21,6 +21,7 @@ All vault files are at `/home/node/.openclaw/vault/`.
 | `vault/founder-profile.json` | Founder profile (populated by onboarding) | read |
 | `vault/onboarding-state.json` | Onboarding progress tracker | read |
 | `vault/economics/daily-budget.json` | Daily budget tracking and spend | read/write |
+| `vault/briefing-state.json` | Daily briefing tracking and history | read/write |
 
 ## Config Paths
 
@@ -59,3 +60,39 @@ Use `sessions_send` with target format `agent:<id>:main`.
 ## Skills
 
 All shared skills at `/home/node/.openclaw/skills/`.
+
+### Knowledge Graph (`skills/knowledge-graph`)
+
+Full read/write access to all collections.
+
+| Tool | Access | Collections |
+|------|--------|-------------|
+| `kg_store` | write | decisions, insights, lessons |
+| `kg_read` | read | decisions, insights, lessons |
+| `kg_search` | read | decisions, insights, lessons |
+| `kg_list` | read | decisions, insights, lessons |
+
+**Vault paths:**
+
+| Path | Access |
+|------|--------|
+| `vault/decisions.json` | read/write |
+| `vault/insights.json` | read/write |
+| `vault/lessons.json` | read/write |
+
+### Human Task Queue (`skills/human-task-queue`)
+
+Full access to task management.
+
+| Tool | Access |
+|------|--------|
+| `htq_create` | Create tasks for the founder |
+| `htq_list` | List and filter tasks |
+| `htq_complete` | Mark tasks as done |
+| `htq_digest` | Generate pending task summary |
+
+**Vault paths:**
+
+| Path | Access |
+|------|--------|
+| `vault/human-tasks.json` | read/write |
