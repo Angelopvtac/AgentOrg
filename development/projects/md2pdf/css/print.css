@@ -1,0 +1,37 @@
+/* ===================== PAGE SETUP ===================== */
+
+@page {
+    size: A4;
+    margin: var(--page-margin-y) var(--page-margin-x);
+
+    @bottom-center {
+        content: counter(page);
+        font-size: 7.5pt;
+        color: var(--color-text-light);
+        font-family: var(--font-sans);
+    }
+}
+
+@page :first {
+    @bottom-center { content: none; }
+    margin: 0;
+}
+
+/* ===================== PAGE BREAKS ===================== */
+
+.page-break {
+    page-break-after: always;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===================== ORPHANS / WIDOWS ===================== */
+
+h1, h2, h3, h4 {
+    page-break-after: avoid;
+}
+
+figure, .callout, .card, .key-insight {
+    page-break-inside: avoid;
+}

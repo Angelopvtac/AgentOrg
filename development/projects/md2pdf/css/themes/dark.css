@@ -1,0 +1,133 @@
+/* Dark theme — override design tokens only */
+:root {
+    /* --- Text --- */
+    --color-text: #e2e8f0;
+    --color-text-dark: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-text-light: #64748b;
+    --color-text-strong: #f8fafc;
+
+    /* --- Backgrounds --- */
+    --color-bg: #0f172a;
+    --color-bg-subtle: #1e293b;
+    --color-bg-muted: #334155;
+
+    /* --- Borders --- */
+    --color-border: #475569;
+    --color-border-light: #334155;
+
+    /* --- Primary --- */
+    --color-primary: #60a5fa;
+    --color-primary-dark: #93c5fd;
+    --color-primary-light: #3b82f6;
+    --color-primary-bg: #1e3a5f;
+    --color-primary-border: #1d4ed8;
+
+    /* --- Callouts --- */
+    --callout-blue-bg: #1e3a5f;
+    --callout-blue-border: #3b82f6;
+    --callout-blue-text: #bfdbfe;
+
+    --callout-green-bg: #14532d;
+    --callout-green-border: #22c55e;
+    --callout-green-text: #bbf7d0;
+
+    --callout-orange-bg: #431407;
+    --callout-orange-border: #f97316;
+    --callout-orange-text: #fed7aa;
+
+    --callout-purple-bg: #2e1065;
+    --callout-purple-border: #a855f7;
+    --callout-purple-text: #e9d5ff;
+
+    --callout-red-bg: #450a0a;
+    --callout-red-border: #ef4444;
+    --callout-red-text: #fecaca;
+
+    /* --- Badges --- */
+    --badge-high-bg: #14532d;
+    --badge-high-text: #86efac;
+    --badge-high-border: #166534;
+
+    --badge-med-high-bg: #1e3a5f;
+    --badge-med-high-text: #93c5fd;
+    --badge-med-high-border: #1d4ed8;
+
+    --badge-med-bg: #431407;
+    --badge-med-text: #fdba74;
+    --badge-med-border: #7c2d12;
+
+    --badge-low-bg: #334155;
+    --badge-low-text: #94a3b8;
+    --badge-low-border: #475569;
+
+    --badge-green-bg: #14532d;
+    --badge-green-text: #86efac;
+    --badge-green-border: #166534;
+
+    --badge-blue-bg: #1e3a5f;
+    --badge-blue-text: #93c5fd;
+    --badge-blue-border: #1d4ed8;
+
+    --badge-orange-bg: #431407;
+    --badge-orange-text: #fdba74;
+    --badge-orange-border: #7c2d12;
+
+    --badge-red-bg: #450a0a;
+    --badge-red-text: #fca5a5;
+    --badge-red-border: #7f1d1d;
+
+    --badge-gray-bg: #334155;
+    --badge-gray-text: #94a3b8;
+    --badge-gray-border: #475569;
+
+    /* --- Cover --- */
+    --cover-gradient-start: #020617;
+    --cover-gradient-mid: #0f172a;
+    --cover-gradient-end: #1e3a5f;
+
+    /* --- Table --- */
+    --table-header-start: #0f172a;
+    --table-header-end: #1e293b;
+    --table-header-text: #e2e8f0;
+    --table-stripe: #1e293b;
+
+    /* --- Dark elements (inverted) --- */
+    --dark-bg-start: #0f172a;
+    --dark-bg-end: #020617;
+    --dark-text: #e2e8f0;
+    --dark-accent: #60a5fa;
+}
+
+/* Dark body background */
+body {
+    background-color: var(--color-bg);
+}
+
+/* Fix code in dark mode */
+code {
+    color: #f472b6;
+}
+
+/* Worksheet dark fix */
+.worksheet {
+    background: var(--color-bg-subtle);
+    border-color: var(--color-border);
+}
+
+.field {
+    border-bottom-color: var(--color-border);
+}
+
+.field-label {
+    color: var(--color-text);
+}
+
+.field-input {
+    color: var(--color-text-muted);
+}
+
+.checklist {
+    background: #14532d;
+    border-color: #166534;
+}

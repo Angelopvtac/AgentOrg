@@ -1,0 +1,128 @@
+/* ===================== DESIGN TOKENS ===================== */
+:root {
+    /* --- Colors: Primary --- */
+    --color-primary: #2563eb;
+    --color-primary-dark: #1e40af;
+    --color-primary-light: #60a5fa;
+    --color-primary-bg: #eff6ff;
+    --color-primary-border: #bfdbfe;
+
+    /* --- Colors: Text --- */
+    --color-text: #1e293b;
+    --color-text-dark: #0f172a;
+    --color-text-muted: #64748b;
+    --color-text-light: #94a3b8;
+    --color-text-strong: #0f172a;
+
+    /* --- Colors: Backgrounds --- */
+    --color-bg: white;
+    --color-bg-subtle: #f8fafc;
+    --color-bg-muted: #f1f5f9;
+
+    /* --- Colors: Borders --- */
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
+
+    /* --- Colors: Callouts --- */
+    --callout-blue-bg: #eff6ff;
+    --callout-blue-border: #3b82f6;
+    --callout-blue-text: #1e3a5f;
+
+    --callout-green-bg: #f0fdf4;
+    --callout-green-border: #22c55e;
+    --callout-green-text: #14532d;
+
+    --callout-orange-bg: #fff7ed;
+    --callout-orange-border: #f97316;
+    --callout-orange-text: #7c2d12;
+
+    --callout-purple-bg: #faf5ff;
+    --callout-purple-border: #a855f7;
+    --callout-purple-text: #3b0764;
+
+    --callout-red-bg: #fef2f2;
+    --callout-red-border: #ef4444;
+    --callout-red-text: #7f1d1d;
+
+    /* --- Colors: Badges --- */
+    --badge-high-bg: #dcfce7;
+    --badge-high-text: #15803d;
+    --badge-high-border: #86efac;
+
+    --badge-med-high-bg: #dbeafe;
+    --badge-med-high-text: #1d4ed8;
+    --badge-med-high-border: #93c5fd;
+
+    --badge-med-bg: #fef3c7;
+    --badge-med-text: #92400e;
+    --badge-med-border: #fcd34d;
+
+    --badge-low-bg: #f1f5f9;
+    --badge-low-text: #475569;
+    --badge-low-border: #cbd5e1;
+
+    /* --- Colors: Cover Page --- */
+    --cover-gradient-start: #0f172a;
+    --cover-gradient-mid: #1e3a5f;
+    --cover-gradient-end: #1e40af;
+    --cover-text: white;
+    --cover-subtitle: #93c5fd;
+    --cover-stat-bg: rgba(255,255,255,0.08);
+    --cover-stat-border: rgba(255,255,255,0.15);
+    --cover-stat-number: #60a5fa;
+    --cover-stat-label: #94a3b8;
+    --cover-tagline: #94a3b8;
+    --cover-divider-start: #3b82f6;
+    --cover-divider-end: #8b5cf6;
+
+    /* --- Colors: Dark elements --- */
+    --dark-bg-start: #1e293b;
+    --dark-bg-end: #0f172a;
+    --dark-text: #e2e8f0;
+    --dark-accent: #60a5fa;
+
+    /* --- Colors: Table --- */
+    --table-header-bg: #1e293b;
+    --table-header-text: white;
+    --table-stripe: #f8fafc;
+
+    /* --- Typography --- */
+    --font-sans: 'Inter', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'DejaVu Sans Mono', monospace;
+
+    --font-size-base: 9.5pt;
+    --font-size-sm: 8.5pt;
+    --font-size-xs: 8pt;
+    --font-size-xxs: 7pt;
+
+    --font-size-h1: 22pt;
+    --font-size-h2: 14pt;
+    --font-size-h3: 11pt;
+    --font-size-h4: 10pt;
+
+    --line-height-base: 1.6;
+    --line-height-tight: 1.15;
+    --line-height-snug: 1.45;
+
+    /* --- Spacing --- */
+    --space-xs: 3pt;
+    --space-sm: 5pt;
+    --space-md: 8pt;
+    --space-lg: 12pt;
+    --space-xl: 16pt;
+    --space-2xl: 20pt;
+    --space-3xl: 28pt;
+
+    /* --- Borders --- */
+    --radius-sm: 3pt;
+    --radius-md: 5pt;
+    --radius-lg: 7pt;
+    --radius-xl: 9pt;
+    --border-width: 1px;
+    --border-thick: 1.5px;
+    --border-accent: 3pt;
+
+    /* --- Page --- */
+    --page-margin-y: 1.6cm;
+    --page-margin-x: 1.8cm;
+}

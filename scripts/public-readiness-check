@@ -1,0 +1,587 @@
+#!/usr/bin/env bash
+# public-readiness-check — Evaluates whether a project is mature enough for public release.
+# Usage: public-readiness-check [path-to-repo] [--json] [--type TYPE]
+#
+# Types: auto, cli, library, webapp, api, utility, research
+#   auto (default) — detect from project files
+#   cli            — CLI tool or command-line app
+#   library        — reusable package/SDK
+#   webapp         — web application (Next.js, React, etc.)
+#   api            — API service (FastAPI, Express, etc.)
+#   utility        — standalone script or small tool
+#   research       — report, documentation, or research project
+#
+# Checks 30+ signals across 6 categories, produces a score out of 100,
+# and gives a GO / NOT YET / NEEDS WORK verdict.
+# Weights are adjusted per project type for accurate scoring.
+
+set -o pipefail
+
+# ── Argument parsing ──
+REPO="."
+JSON_OUTPUT=false
+PROJECT_TYPE="auto"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --json)
+      JSON_OUTPUT=true
+      shift
+      ;;
+    --type)
+      PROJECT_TYPE="${2:-auto}"
+      shift 2
+      ;;
+    --type=*)
+      PROJECT_TYPE="${1#*=}"
+      shift
+      ;;
+    --help|-h)
+      echo "Usage: public-readiness-check [path] [--json] [--type TYPE]"
+      echo ""
+      echo "Types: auto, cli, library, webapp, api, utility, research"
+      exit 0
+      ;;
+    *)
+      REPO="$1"
+      shift
+      ;;
+  esac
+done
+
+cd "$REPO" 2>/dev/null || { echo "Error: Cannot access $REPO"; exit 1; }
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  echo "Error: $REPO is not a git repository"
+  exit 1
+fi
+
+# ── Auto-detect project type ──
+detect_type() {
+  # Check for web frameworks FIRST (most specific signal)
+  if [[ -f package.json ]]; then
+    if grep -qE '"(next|react-dom|vue|@angular/core|svelte|nuxt)"' package.json 2>/dev/null; then
+      echo "webapp"; return
+    fi
+  fi
+  # Check for API frameworks
+  if grep -rql "FastAPI\|Flask\|Django\|express()" --include="*.py" --include="*.js" --include="*.ts" . 2>/dev/null | head -1 | grep -q .; then
+    echo "api"; return
+  fi
+  # Check for Python CLI (explicit entry points in pyproject.toml)
+  if [[ -f pyproject.toml ]] && grep -q '\[project\.scripts\]' pyproject.toml 2>/dev/null; then
+    echo "cli"; return
+  fi
+  # Check for CLI patterns in root-level Python files (not recursive — avoids false positives)
+  if grep -ql "click\.\|argparse\.\|typer\." *.py 2>/dev/null | head -1 | grep -q .; then
+    echo "cli"; return
+  fi
+  # Check for Node CLI
+  if [[ -f package.json ]] && grep -q '"bin"' package.json 2>/dev/null; then
+    echo "cli"; return
+  fi
+  # Check for Node library (has main/exports, no bin, no web framework)
+  if [[ -f package.json ]] && grep -qE '"(main|exports)"' package.json 2>/dev/null; then
+    echo "library"; return
+  fi
+  # Check for Python library (has pyproject.toml but no scripts)
+  if [[ -f pyproject.toml ]] || [[ -f setup.py ]] || [[ -f setup.cfg ]]; then
+    echo "library"; return
+  fi
+  # Check if mostly markdown/docs
+  local total_files md_files
+  total_files=$(find . -maxdepth 3 -type f -not -path './.git/*' -not -path './node_modules/*' 2>/dev/null | wc -l)
+  md_files=$(find . -maxdepth 3 -name "*.md" -not -path './.git/*' 2>/dev/null | wc -l)
+  if (( total_files > 0 && md_files * 100 / total_files > 60 )); then
+    echo "research"; return
+  fi
+  # Small project with few source files
+  local src_files
+  src_files=$(find . -maxdepth 3 \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.sh" \) -not -path './node_modules/*' -not -path './.git/*' 2>/dev/null | wc -l)
+  if (( src_files <= 5 )); then
+    echo "utility"; return
+  fi
+  echo "library"
+}
+
+if [[ "$PROJECT_TYPE" == "auto" ]]; then
+  PROJECT_TYPE=$(detect_type)
+fi
+
+# Validate type
+case "$PROJECT_TYPE" in
+  cli|library|webapp|api|utility|research) ;;
+  *) echo "Error: Unknown type '$PROJECT_TYPE'. Use: cli, library, webapp, api, utility, research"; exit 1 ;;
+esac
+
+# ── Per-type weight overrides ──
+# Default weights (library baseline)
+W_CONTRIBUTING=2; W_COC=2; W_ADDITIONAL_DOCS=5
+W_TESTS=8; W_LINTER=3; W_FORMATTER=2; W_TS_STRICT=3
+W_CI=6; W_ISSUE_TPL=3; W_PR_TPL=3; W_DEP_UPDATES=3
+W_COMMITS=5; W_CONTRIBUTORS=3; W_RELEASES=4; W_VERSION=5
+W_SECURITY_POLICY=4; W_LOCK_FILE=4
+W_EXAMPLES=3; W_SCRIPTS=3
+
+case "$PROJECT_TYPE" in
+  cli)
+    W_CONTRIBUTING=0; W_COC=0
+    W_ISSUE_TPL=0; W_PR_TPL=0; W_DEP_UPDATES=0
+    W_SECURITY_POLICY=0; W_LOCK_FILE=2
+    W_CONTRIBUTORS=0; W_TS_STRICT=0; W_FORMATTER=0
+    ;;
+  utility)
+    W_CONTRIBUTING=0; W_COC=0; W_ADDITIONAL_DOCS=2
+    W_TESTS=4; W_LINTER=0; W_FORMATTER=0; W_TS_STRICT=0
+    W_CI=0; W_ISSUE_TPL=0; W_PR_TPL=0; W_DEP_UPDATES=0
+    W_CONTRIBUTORS=0; W_RELEASES=0; W_VERSION=0
+    W_SECURITY_POLICY=0; W_LOCK_FILE=0
+    W_SCRIPTS=0
+    ;;
+  research)
+    W_CONTRIBUTING=0; W_COC=0
+    W_TESTS=0; W_LINTER=0; W_FORMATTER=0; W_TS_STRICT=0
+    W_CI=0; W_ISSUE_TPL=0; W_PR_TPL=0; W_DEP_UPDATES=0
+    W_CONTRIBUTORS=0; W_RELEASES=0; W_VERSION=0
+    W_SECURITY_POLICY=0; W_LOCK_FILE=0
+    W_SCRIPTS=0; W_EXAMPLES=0
+    ;;
+  webapp)
+    W_SECURITY_POLICY=4; W_LOCK_FILE=4
+    W_EXAMPLES=0
+    ;;
+  api)
+    W_SECURITY_POLICY=4; W_LOCK_FILE=4
+    W_EXAMPLES=0; W_COC=0
+    ;;
+  library)
+    # defaults are already library-tuned
+    ;;
+esac
+
+# ── Scoring ──
+ROWS=()    # "category|check|pts|max|note"
+TOTAL=0
+MAX_TOTAL=0
+
+score() {
+  local category="$1" check="$2" points="$3" max="$4" note="$5"
+  # Skip checks with 0 max weight for this project type
+  if (( max == 0 )); then
+    return
+  fi
+  # Clamp points to max
+  if (( points > max )); then
+    points=$max
+  fi
+  ROWS+=("${category}|${check}|${points}|${max}|${note}")
+  TOTAL=$((TOTAL + points))
+  MAX_TOTAL=$((MAX_TOTAL + max))
+}
+
+# ═══════════════════════════════════════════
+# Category 1: Documentation (20 pts max)
+# ═══════════════════════════════════════════
+
+if [[ -f README.md ]] || [[ -f readme.md ]] || [[ -f README ]]; then
+  readme_file=$(ls README.md readme.md README 2>/dev/null | head -1)
+  readme_lines=$(wc -l < "$readme_file")
+  if (( readme_lines > 100 )); then
+    score "Documentation" "README quality" 5 5 "${readme_lines} lines (comprehensive)"
+  elif (( readme_lines > 30 )); then
+    score "Documentation" "README quality" 3 5 "${readme_lines} lines (could be more detailed)"
+  else
+    score "Documentation" "README quality" 1 5 "Only ${readme_lines} lines (too brief for public)"
+  fi
+else
+  score "Documentation" "README quality" 0 5 "MISSING — essential for any public project"
+fi
+
+if [[ -f LICENSE ]] || [[ -f LICENSE.md ]] || [[ -f COPYING ]]; then
+  score "Documentation" "LICENSE" 4 4 "License file found"
+else
+  score "Documentation" "LICENSE" 0 4 "MISSING — no one can legally use your code"
+fi
+
+if [[ -f CONTRIBUTING.md ]] || [[ -f .github/CONTRIBUTING.md ]]; then
+  score "Documentation" "CONTRIBUTING" "$W_CONTRIBUTING" "$W_CONTRIBUTING" "Contributing guide found"
+else
+  score "Documentation" "CONTRIBUTING" 0 "$W_CONTRIBUTING" "Missing (optional but valuable for OSS)"
+fi
+
+if [[ -f CHANGELOG.md ]] || [[ -f CHANGES.md ]] || [[ -f HISTORY.md ]]; then
+  score "Documentation" "CHANGELOG" 2 2 "Changelog found"
+else
+  score "Documentation" "CHANGELOG" 0 2 "Missing (recommended for versioned releases)"
+fi
+
+if [[ -f CODE_OF_CONDUCT.md ]] || [[ -f .github/CODE_OF_CONDUCT.md ]]; then
+  score "Documentation" "Code of Conduct" "$W_COC" "$W_COC" "Code of conduct found"
+else
+  score "Documentation" "Code of Conduct" 0 "$W_COC" "Missing (standard for community projects)"
+fi
+
+doc_count=$(find . -maxdepth 3 -name "*.md" -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | wc -l)
+if (( doc_count > 5 )); then
+  score "Documentation" "Additional docs" "$W_ADDITIONAL_DOCS" "$W_ADDITIONAL_DOCS" "${doc_count} markdown files found"
+elif (( doc_count > 2 )); then
+  score "Documentation" "Additional docs" $(( W_ADDITIONAL_DOCS * 3 / 5 )) "$W_ADDITIONAL_DOCS" "${doc_count} markdown files (could use more)"
+else
+  score "Documentation" "Additional docs" $(( W_ADDITIONAL_DOCS / 5 )) "$W_ADDITIONAL_DOCS" "Very few docs beyond basics"
+fi
+
+# ═══════════════════════════════════════════
+# Category 2: Code Quality (20 pts max)
+# ═══════════════════════════════════════════
+
+test_files=$(find . -maxdepth 5 \( -name "*.test.*" -o -name "*.spec.*" -o -name "__tests__" -o -name "test_*.py" -o -path "*/test/*" -o -path "*/tests/*" \) -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./.venv/*" 2>/dev/null | wc -l)
+if (( test_files > 20 )); then
+  score "Code Quality" "Test coverage" "$W_TESTS" "$W_TESTS" "${test_files} test files (good coverage)"
+elif (( test_files > 5 )); then
+  score "Code Quality" "Test coverage" $(( W_TESTS * 5 / 8 )) "$W_TESTS" "${test_files} test files (moderate)"
+elif (( test_files > 0 )); then
+  score "Code Quality" "Test coverage" $(( W_TESTS / 4 )) "$W_TESTS" "${test_files} test files (minimal)"
+else
+  score "Code Quality" "Test coverage" 0 "$W_TESTS" "NO TESTS — critical gap for public projects"
+fi
+
+# Linter detection — check standalone configs AND pyproject.toml/setup.cfg tool sections
+linter_found=false
+if [[ -f .eslintrc.js ]] || [[ -f .eslintrc.json ]] || [[ -f .eslintrc.yml ]] || [[ -f eslint.config.js ]] || [[ -f eslint.config.mjs ]] || [[ -f biome.json ]] || [[ -f .flake8 ]] || [[ -f .pylintrc ]] || [[ -f ruff.toml ]] || [[ -f .ruff.toml ]]; then
+  linter_found=true
+elif [[ -f pyproject.toml ]] && grep -qE '^\[tool\.(ruff|pylint|flake8|mypy)\]' pyproject.toml 2>/dev/null; then
+  linter_found=true
+elif [[ -f setup.cfg ]] && grep -qE '^\[(flake8|pylint|mypy)\]' setup.cfg 2>/dev/null; then
+  linter_found=true
+fi
+if $linter_found; then
+  score "Code Quality" "Linter config" "$W_LINTER" "$W_LINTER" "Linter configured"
+else
+  score "Code Quality" "Linter config" 0 "$W_LINTER" "No linter config found"
+fi
+
+# Formatter detection
+formatter_found=false
+if [[ -f .prettierrc ]] || [[ -f .prettierrc.json ]] || [[ -f .prettierrc.js ]] || [[ -f biome.json ]] || [[ -f .editorconfig ]]; then
+  formatter_found=true
+elif [[ -f pyproject.toml ]] && grep -qE '^\[tool\.(black|yapf|autopep8|ruff\.format)\]' pyproject.toml 2>/dev/null; then
+  formatter_found=true
+fi
+if $formatter_found; then
+  score "Code Quality" "Formatter" "$W_FORMATTER" "$W_FORMATTER" "Formatter configured"
+else
+  score "Code Quality" "Formatter" 0 "$W_FORMATTER" "No formatter config"
+fi
+
+if [[ -f tsconfig.json ]] || [[ -f tsconfig.base.json ]]; then
+  tsconfig_file=$(ls tsconfig.base.json tsconfig.json 2>/dev/null | head -1)
+  if grep -q '"strict": true' "$tsconfig_file" 2>/dev/null; then
+    score "Code Quality" "TypeScript strict" "$W_TS_STRICT" "$W_TS_STRICT" "Strict mode enabled"
+  else
+    score "Code Quality" "TypeScript strict" $(( W_TS_STRICT / 3 )) "$W_TS_STRICT" "TS found but strict not enabled"
+  fi
+else
+  score "Code Quality" "TypeScript strict" 0 "$W_TS_STRICT" "N/A (not TypeScript)"
+fi
+
+secrets_found=0
+grep -rq "AKIA[0-9A-Z]\{16\}" --include="*.ts" --include="*.js" --include="*.py" --include="*.json" --include="*.env" . 2>/dev/null && secrets_found=1
+grep -rq "sk-[a-zA-Z0-9]\{20,\}" --include="*.ts" --include="*.js" --include="*.py" --include="*.json" --include="*.env" . 2>/dev/null && secrets_found=1
+grep -rq "ghp_[a-zA-Z0-9]\{36\}" --include="*.ts" --include="*.js" --include="*.py" --include="*.json" --include="*.env" . 2>/dev/null && secrets_found=1
+[[ -f .env ]] && git ls-files --error-unmatch .env &>/dev/null && secrets_found=1
+if (( secrets_found == 0 )); then
+  score "Code Quality" "No secrets" 4 4 "No obvious secrets detected"
+else
+  score "Code Quality" "No secrets" 0 4 "DANGER — possible secrets in tracked files"
+fi
+
+# ═══════════════════════════════════════════
+# Category 3: CI/CD & Automation (15 pts max)
+# ═══════════════════════════════════════════
+
+if [[ -d .github/workflows ]] && ls .github/workflows/*.yml &>/dev/null 2>&1; then
+  workflow_count=$(ls .github/workflows/*.yml 2>/dev/null | wc -l)
+  score "CI/CD" "CI pipeline" "$W_CI" "$W_CI" "${workflow_count} GitHub Actions workflow(s)"
+elif [[ -f .gitlab-ci.yml ]] || [[ -f Jenkinsfile ]] || [[ -f .circleci/config.yml ]]; then
+  score "CI/CD" "CI pipeline" "$W_CI" "$W_CI" "CI pipeline configured"
+else
+  score "CI/CD" "CI pipeline" 0 "$W_CI" "MISSING — no CI/CD pipeline"
+fi
+
+if [[ -d .github/ISSUE_TEMPLATE ]] || [[ -f .github/ISSUE_TEMPLATE.md ]]; then
+  score "CI/CD" "Issue templates" "$W_ISSUE_TPL" "$W_ISSUE_TPL" "Issue templates found"
+else
+  score "CI/CD" "Issue templates" 0 "$W_ISSUE_TPL" "No issue templates"
+fi
+
+if [[ -f .github/pull_request_template.md ]] || [[ -f .github/PULL_REQUEST_TEMPLATE.md ]]; then
+  score "CI/CD" "PR template" "$W_PR_TPL" "$W_PR_TPL" "PR template found"
+else
+  score "CI/CD" "PR template" 0 "$W_PR_TPL" "No PR template"
+fi
+
+if [[ -f .github/dependabot.yml ]] || [[ -f renovate.json ]] || [[ -f .github/renovate.json ]]; then
+  score "CI/CD" "Dep updates" "$W_DEP_UPDATES" "$W_DEP_UPDATES" "Automated dependency updates configured"
+else
+  score "CI/CD" "Dep updates" 0 "$W_DEP_UPDATES" "No automated dep update tool"
+fi
+
+# ═══════════════════════════════════════════
+# Category 4: Project Maturity (20 pts max)
+# ═══════════════════════════════════════════
+
+commit_count=$(git rev-list --count HEAD 2>/dev/null || echo 0)
+if (( commit_count > 50 )); then
+  score "Maturity" "Commit history" "$W_COMMITS" "$W_COMMITS" "${commit_count} commits (established)"
+elif (( commit_count > 20 )); then
+  score "Maturity" "Commit history" $(( W_COMMITS * 3 / 5 )) "$W_COMMITS" "${commit_count} commits (growing)"
+elif (( commit_count > 5 )); then
+  score "Maturity" "Commit history" $(( W_COMMITS * 2 / 5 )) "$W_COMMITS" "${commit_count} commits (early stage)"
+else
+  score "Maturity" "Commit history" 0 "$W_COMMITS" "${commit_count} commit(s) (very early)"
+fi
+
+contributor_count=$(git shortlog -sn --no-merges 2>/dev/null | wc -l)
+if (( W_CONTRIBUTORS > 0 )); then
+  if (( contributor_count > 3 )); then
+    score "Maturity" "Contributors" "$W_CONTRIBUTORS" "$W_CONTRIBUTORS" "${contributor_count} contributors"
+  elif (( contributor_count > 1 )); then
+    score "Maturity" "Contributors" $(( W_CONTRIBUTORS * 2 / 3 )) "$W_CONTRIBUTORS" "${contributor_count} contributors"
+  else
+    score "Maturity" "Contributors" $(( W_CONTRIBUTORS / 3 )) "$W_CONTRIBUTORS" "Solo contributor"
+  fi
+fi
+
+tag_count=$(git tag 2>/dev/null | wc -l)
+if (( W_RELEASES > 0 )); then
+  if (( tag_count > 3 )); then
+    score "Maturity" "Releases" "$W_RELEASES" "$W_RELEASES" "${tag_count} tags/releases"
+  elif (( tag_count > 0 )); then
+    score "Maturity" "Releases" $(( W_RELEASES / 2 )) "$W_RELEASES" "${tag_count} tag(s)"
+  else
+    score "Maturity" "Releases" 0 "$W_RELEASES" "No tagged releases"
+  fi
+fi
+
+if [[ -f .gitignore ]]; then
+  ignore_lines=$(grep -cv '^\s*$\|^\s*#' .gitignore 2>/dev/null || echo 0)
+  if (( ignore_lines > 10 )); then
+    score "Maturity" ".gitignore" 3 3 "Comprehensive (${ignore_lines} rules)"
+  else
+    score "Maturity" ".gitignore" 2 3 "Exists but could be more thorough"
+  fi
+else
+  score "Maturity" ".gitignore" 0 3 "MISSING"
+fi
+
+# Version detection — check package.json, pyproject.toml, Cargo.toml
+version=""
+if [[ -f package.json ]]; then
+  version=$(grep '"version"' package.json 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "")
+elif [[ -f pyproject.toml ]]; then
+  version=$(grep -m1 '^version\s*=' pyproject.toml 2>/dev/null | sed 's/.*"\(.*\)".*/\1/' || echo "")
+elif [[ -f Cargo.toml ]]; then
+  version=$(grep -m1 '^version\s*=' Cargo.toml 2>/dev/null | sed 's/.*"\(.*\)".*/\1/' || echo "")
+fi
+if [[ -n "$version" ]]; then
+  major=$(echo "$version" | cut -d. -f1)
+  if [[ "$major" -ge 1 ]] 2>/dev/null; then
+    score "Maturity" "Version" "$W_VERSION" "$W_VERSION" "v${version} (1.0+ signals stability)"
+  elif [[ "$version" =~ ^0\.[1-9] ]]; then
+    score "Maturity" "Version" $(( W_VERSION * 2 / 5 )) "$W_VERSION" "v${version} (pre-1.0 beta)"
+  else
+    score "Maturity" "Version" $(( W_VERSION / 5 )) "$W_VERSION" "v${version} (very early)"
+  fi
+else
+  score "Maturity" "Version" $(( W_VERSION / 5 )) "$W_VERSION" "No version found"
+fi
+
+# ═══════════════════════════════════════════
+# Category 5: Security (15 pts max)
+# ═══════════════════════════════════════════
+
+if [[ -f SECURITY.md ]] || [[ -f .github/SECURITY.md ]]; then
+  score "Security" "Security policy" "$W_SECURITY_POLICY" "$W_SECURITY_POLICY" "Security policy found"
+else
+  score "Security" "Security policy" 0 "$W_SECURITY_POLICY" "No SECURITY.md"
+fi
+
+if [[ -f .gitignore ]] && grep -q '\.env' .gitignore 2>/dev/null; then
+  score "Security" ".env ignored" 3 3 ".env files gitignored"
+else
+  score "Security" ".env ignored" 0 3 ".env not in .gitignore"
+fi
+
+localhost_refs=$(grep -r "localhost" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.py" -l . 2>/dev/null | grep -v node_modules | grep -v ".test." | grep -v ".spec." | grep -v "test_" | wc -l)
+if (( localhost_refs > 5 )); then
+  score "Security" "Hardcoded hosts" 0 4 "${localhost_refs} files reference localhost"
+elif (( localhost_refs > 0 )); then
+  score "Security" "Hardcoded hosts" 2 4 "${localhost_refs} files reference localhost"
+else
+  score "Security" "Hardcoded hosts" 4 4 "No hardcoded localhost"
+fi
+
+# Lock file detection — Node and Python
+lock_found=false
+if [[ -f package-lock.json ]] || [[ -f yarn.lock ]] || [[ -f pnpm-lock.yaml ]] || [[ -f bun.lockb ]]; then
+  lock_found=true
+elif [[ -f poetry.lock ]] || [[ -f uv.lock ]] || [[ -f Pipfile.lock ]]; then
+  lock_found=true
+elif [[ -f requirements.txt ]] && grep -q '==' requirements.txt 2>/dev/null; then
+  lock_found=true
+elif [[ -f Cargo.lock ]]; then
+  lock_found=true
+fi
+if $lock_found; then
+  score "Security" "Lock file" "$W_LOCK_FILE" "$W_LOCK_FILE" "Dependency lock file committed"
+else
+  score "Security" "Lock file" 0 "$W_LOCK_FILE" "No lock file"
+fi
+
+# ═══════════════════════════════════════════
+# Category 6: User Experience (10 pts max)
+# ═══════════════════════════════════════════
+
+if [[ -f README.md ]]; then
+  if grep -qi "install\|getting started\|quickstart\|setup" README.md 2>/dev/null; then
+    score "UX" "Install instructions" 4 4 "README includes setup instructions"
+  else
+    score "UX" "Install instructions" 0 4 "README has no install section"
+  fi
+else
+  score "UX" "Install instructions" 0 4 "No README"
+fi
+
+if [[ -d examples ]] || [[ -d example ]]; then
+  score "UX" "Examples" "$W_EXAMPLES" "$W_EXAMPLES" "Examples directory found"
+elif [[ -f README.md ]] && grep -qi "example\|usage" README.md 2>/dev/null; then
+  score "UX" "Examples" $(( W_EXAMPLES * 2 / 3 )) "$W_EXAMPLES" "Usage/examples in README"
+else
+  score "UX" "Examples" 0 "$W_EXAMPLES" "No examples"
+fi
+
+# Entry point / scripts detection
+if [[ -f package.json ]]; then
+  scripts_found=0
+  for script in dev build test start; do
+    grep -q "\"$script\"" package.json 2>/dev/null && scripts_found=$((scripts_found + 1))
+  done
+  if (( scripts_found >= 3 )); then
+    score "UX" "Dev scripts" "$W_SCRIPTS" "$W_SCRIPTS" "${scripts_found}/4 standard scripts"
+  elif (( scripts_found >= 1 )); then
+    score "UX" "Dev scripts" $(( W_SCRIPTS / 3 )) "$W_SCRIPTS" "${scripts_found}/4 standard scripts"
+  else
+    score "UX" "Dev scripts" 0 "$W_SCRIPTS" "No standard npm scripts"
+  fi
+elif [[ -f pyproject.toml ]] && grep -q '\[project\.scripts\]' pyproject.toml 2>/dev/null; then
+  score "UX" "Dev scripts" "$W_SCRIPTS" "$W_SCRIPTS" "CLI entry point defined in pyproject.toml"
+elif [[ -f Makefile ]]; then
+  score "UX" "Dev scripts" $(( W_SCRIPTS * 2 / 3 )) "$W_SCRIPTS" "Makefile found"
+else
+  score "UX" "Dev scripts" 0 "$W_SCRIPTS" "No dev scripts or entry points"
+fi
+
+# ═══════════════════════════════════════════
+# Output
+# ═══════════════════════════════════════════
+
+if (( MAX_TOTAL == 0 )); then
+  PCT=0
+else
+  PCT=$((TOTAL * 100 / MAX_TOTAL))
+fi
+
+if (( PCT >= 80 )); then
+  VERDICT="GO"
+  VERDICT_MSG="Ready for public release"
+  COLOR="\033[1;32m"
+elif (( PCT >= 55 )); then
+  VERDICT="NEEDS WORK"
+  VERDICT_MSG="Close but has gaps — address critical items first"
+  COLOR="\033[1;33m"
+else
+  VERDICT="NOT YET"
+  VERDICT_MSG="Significant gaps remain — keep building"
+  COLOR="\033[1;31m"
+fi
+
+# Type label for display
+declare -A TYPE_LABELS=(
+  [cli]="CLI Tool"
+  [library]="Library/Package"
+  [webapp]="Web Application"
+  [api]="API Service"
+  [utility]="Utility Script"
+  [research]="Research/Documentation"
+)
+TYPE_LABEL="${TYPE_LABELS[$PROJECT_TYPE]:-$PROJECT_TYPE}"
+
+if $JSON_OUTPUT; then
+  echo "{"
+  echo "  \"score\": $TOTAL,"
+  echo "  \"maxScore\": $MAX_TOTAL,"
+  echo "  \"percentage\": $PCT,"
+  echo "  \"verdict\": \"$VERDICT\","
+  echo "  \"projectType\": \"$PROJECT_TYPE\","
+  echo "  \"checks\": ["
+  for i in "${!ROWS[@]}"; do
+    IFS='|' read -r cat chk pts mx note <<< "${ROWS[$i]}"
+    comma=","
+    (( i == ${#ROWS[@]} - 1 )) && comma=""
+    printf '    {"category":"%s","check":"%s","score":"%s/%s","note":"%s"}%s\n' "$cat" "$chk" "$pts" "$mx" "$note" "$comma"
+  done
+  echo "  ]"
+  echo "}"
+  exit 0
+fi
+
+# Pretty output
+echo ""
+echo "╔══════════════════════════════════════════════════════════════╗"
+echo "║              PUBLIC READINESS CHECK                         ║"
+echo "╚══════════════════════════════════════════════════════════════╝"
+printf "  Project type: \033[1;36m%s\033[0m\n" "$TYPE_LABEL"
+
+current_category=""
+for row in "${ROWS[@]}"; do
+  IFS='|' read -r category check pts_num pts_max note <<< "$row"
+
+  if [[ "$category" != "$current_category" ]]; then
+    echo ""
+    printf "  \033[1m── %s ──\033[0m\n" "$category"
+    current_category="$category"
+  fi
+
+  if (( pts_num == pts_max )); then
+    icon="\033[32m✓\033[0m"
+  elif (( pts_num > 0 )); then
+    icon="\033[33m◐\033[0m"
+  else
+    icon="\033[31m✗\033[0m"
+  fi
+
+  printf "  ${icon} %-22s %s/%-3s %s\n" "$check" "$pts_num" "$pts_max" "$note"
+done
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+printf "  Score: \033[1m%d / %d (%d%%)\033[0m\n" "$TOTAL" "$MAX_TOTAL" "$PCT"
+printf "  Verdict: ${COLOR}%s\033[0m — %s\n" "$VERDICT" "$VERDICT_MSG"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Top priorities (zero-score items with high weight)
+echo ""
+echo "  Top priorities:"
+pri=0
+for row in "${ROWS[@]}"; do
+  IFS='|' read -r _cat check pts_num pts_max note <<< "$row"
+  if (( pts_num == 0 && pts_max >= 3 )); then
+    printf "  \033[31m→\033[0m %s: %s\n" "$check" "$note"
+    pri=$((pri + 1))
+    (( pri >= 6 )) && break
+  fi
+done
+if (( pri == 0 )); then
+  printf "  \033[32m✓\033[0m No critical gaps found\n"
+fi
+echo ""

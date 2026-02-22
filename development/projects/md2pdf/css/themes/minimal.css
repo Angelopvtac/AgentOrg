@@ -1,0 +1,68 @@
+/* Minimal theme — clean, print-friendly, reduced visual weight */
+:root {
+    /* --- Primary: neutral gray instead of blue --- */
+    --color-primary: #475569;
+    --color-primary-dark: #334155;
+    --color-primary-light: #94a3b8;
+    --color-primary-bg: #f8fafc;
+    --color-primary-border: #e2e8f0;
+
+    /* --- Cover: subtle gradient --- */
+    --cover-gradient-start: #1e293b;
+    --cover-gradient-mid: #334155;
+    --cover-gradient-end: #475569;
+    --cover-subtitle: #cbd5e1;
+    --cover-stat-number: #e2e8f0;
+    --cover-divider-start: #94a3b8;
+    --cover-divider-end: #cbd5e1;
+
+    /* --- Callouts: all same subtle style --- */
+    --callout-blue-bg: #f8fafc;
+    --callout-blue-border: #94a3b8;
+    --callout-blue-text: #334155;
+
+    --callout-green-bg: #f8fafc;
+    --callout-green-border: #94a3b8;
+    --callout-green-text: #334155;
+
+    --callout-orange-bg: #f8fafc;
+    --callout-orange-border: #94a3b8;
+    --callout-orange-text: #334155;
+
+    --callout-purple-bg: #f8fafc;
+    --callout-purple-border: #94a3b8;
+    --callout-purple-text: #334155;
+
+    --callout-red-bg: #f8fafc;
+    --callout-red-border: #94a3b8;
+    --callout-red-text: #334155;
+
+    /* --- Table: lighter header --- */
+    --table-header-start: #475569;
+    --table-header-end: #64748b;
+
+    /* --- Dark elements: lighter --- */
+    --dark-bg-start: #334155;
+    --dark-bg-end: #1e293b;
+}
+
+/* Reduce border weight */
+h2 {
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Lighter blockquote */
+blockquote {
+    border-left-width: 3pt;
+}
+
+/* No gradient on code blocks */
+pre {
+    background: #334155;
+    border-color: #475569;
+}
+
+/* Lighter highlight box */
+.highlight-box {
+    background: linear-gradient(135deg, #334155, #475569);
+}

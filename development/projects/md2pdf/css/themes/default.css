@@ -1,0 +1,5 @@
+/* Default theme — uses the base design tokens as-is */
+/* This file exists so every theme follows the same pattern */
+:root {
+    /* No overrides needed — base variables.css has the defaults */
+}
