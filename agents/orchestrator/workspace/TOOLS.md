@@ -96,3 +96,62 @@ Full access to task management.
 | Path | Access |
 |------|--------|
 | `vault/human-tasks.json` | read/write |
+
+### Progression Engine (`skills/progression-engine`)
+
+Full access. Used for daily gate evaluation, phase transitions, and history tracking.
+
+| Tool | Access |
+|------|--------|
+| `gate_evaluate` | Evaluate all criteria for current phase gate |
+| `gate_report` | Generate formatted gate status report |
+| `gate_log_evaluation` | Store evaluation results in history |
+| `phase_get` | Get current phase information |
+| `phase_transition` | Transition to next phase (requires gate PASSED) |
+| `phase_history` | Get full phase transition history |
+
+**Vault paths:**
+
+| Path | Access |
+|------|--------|
+| `vault/phase-state.json` | read/write |
+| `vault/founder-profile.json` | read (for L0 gate checks) |
+| `vault/onboarding-state.json` | read (for L0 gate checks) |
+| `vault/economics/daily-budget.json` | read (for L0 financial baseline check) |
+
+**Config paths:**
+
+| Path | Access |
+|------|--------|
+| `config/progression.json` | read (phase definitions and gate criteria) |
+
+### Economics Engine (`skills/economics-engine`)
+
+Full access. Used for cost tracking, budget enforcement, and financial reporting.
+
+| Tool | Access |
+|------|--------|
+| `econ_log_cost` | Record API or infrastructure cost event |
+| `econ_log_revenue` | Record revenue event |
+| `econ_log_refund` | Record refund or chargeback |
+| `econ_get_treasury` | Get treasury balance and summary |
+| `econ_get_burn_rate` | Calculate burn rate and runway |
+| `econ_get_agent_costs` | Get cost breakdown by agent |
+| `econ_get_budget_status` | Check daily budget utilization |
+| `econ_set_budget` | Update daily budget limit |
+| `econ_get_revenue_attribution` | Revenue attribution by channel/agent/content |
+
+**Vault paths:**
+
+| Path | Access |
+|------|--------|
+| `vault/economics/daily-budget.json` | read/write |
+| `vault/economics/costs.json` | read/write |
+| `vault/economics/revenue.json` | read/write |
+| `vault/economics/treasury.json` | read/write |
+
+**Config paths:**
+
+| Path | Access |
+|------|--------|
+| `config/economics.json` | read (budget rules and thresholds) |

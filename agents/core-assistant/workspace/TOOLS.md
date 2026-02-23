@@ -95,3 +95,32 @@ Read access and create only. Cannot complete tasks (founder action).
 | Path | Access |
 |------|--------|
 | `vault/human-tasks.json` | read, append (create only) |
+
+### Progression Engine (`skills/progression-engine`)
+
+Read-only access. Use to explain phase status and gate progress to the founder.
+
+| Tool | Access |
+|------|--------|
+| `gate_evaluate` | **no access** (orchestrator only) |
+| `gate_report` | Read gate status report |
+| `gate_log_evaluation` | **no access** (orchestrator only) |
+| `phase_get` | Get current phase information |
+| `phase_transition` | **no access** (orchestrator only) |
+| `phase_history` | Read phase transition history |
+
+### Economics Engine (`skills/economics-engine`)
+
+Read-only access. Use to explain financial status to the founder.
+
+| Tool | Access |
+|------|--------|
+| `econ_log_cost` | **no access** |
+| `econ_log_revenue` | **no access** |
+| `econ_log_refund` | **no access** |
+| `econ_get_treasury` | Read treasury balance and summary |
+| `econ_get_burn_rate` | Read burn rate and runway |
+| `econ_get_agent_costs` | **no access** |
+| `econ_get_budget_status` | Read budget utilization status |
+| `econ_set_budget` | **no access** |
+| `econ_get_revenue_attribution` | **no access** |

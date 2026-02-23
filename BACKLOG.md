@@ -15,8 +15,8 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F1.1-S1 | As a developer, I can clone the repo and understand the full project structure from README and directory layout | P0 | planned |
-| F1.1-S2 | As a developer, I can run `docker compose up` and have a working AgentOrg instance | P0 | planned |
+| F1.1-S1 | As a developer, I can clone the repo and understand the full project structure from README and directory layout | P0 | done |
+| F1.1-S2 | As a developer, I can run `docker compose up` and have a working AgentOrg instance | P0 | done |
 
 **Tasks:**
 
@@ -32,12 +32,12 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F1.2-S1 | As the system, I can route inbound messages to the correct agent based on channel, peer, and context | P0 | planned |
-| F1.2-S2 | As the founder, my primary channel (Discord/WhatsApp/Telegram) connects to the orchestrator by default | P0 | planned |
+| F1.2-S1 | As the system, I can route inbound messages to the correct agent based on channel, peer, and context | P0 | done |
+| F1.2-S2 | As the founder, my primary channel (Discord/WhatsApp/Telegram) connects to the orchestrator by default | P0 | done |
 
 **Tasks:**
 
-- `F1.2-T1` — Create `config/gateway.json` — OpenClaw gateway config with agent list, bindings, channel config, session settings
+- `F1.2-T1` — Create `config/openclaw.json` — OpenClaw gateway config (JSON5) with agent list, bindings, channel config, session settings
 - `F1.2-T2` — Configure initial agents: `orchestrator` (default), `core-assistant` — both with workspace paths, model config, heartbeat settings
 - `F1.2-T3` — Configure binding rules: all inbound → orchestrator (orchestrator handles internal routing to other agents)
 - `F1.2-T4` — Configure session management: `dmScope: "per-peer"`, session reset rules, timeout settings
@@ -48,7 +48,7 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F1.3-S1 | As the system, I can route agent requests to the appropriate model tier based on task complexity | P0 | planned |
+| F1.3-S1 | As the system, I can route agent requests to the appropriate model tier based on task complexity | P0 | done |
 | F1.3-S2 | As the economics engine, I can attribute API costs per model tier and per agent | P0 | planned |
 
 **Tasks:**
@@ -62,8 +62,8 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F1.4-S1 | As the founder, I can run a setup script that walks me through first-time configuration | P1 | planned |
-| F1.4-S2 | As an operator, I can check system health with a single command | P1 | planned |
+| F1.4-S1 | As the founder, I can run a setup script that walks me through first-time configuration | P1 | done |
+| F1.4-S2 | As an operator, I can check system health with a single command | P1 | done |
 
 **Tasks:**
 
@@ -81,18 +81,18 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F2.1-S1 | As the orchestrator, I can receive all inbound messages and route them to the correct agent | P0 | planned |
-| F2.1-S2 | As the orchestrator, I can evaluate gate criteria and manage phase transitions | P0 | planned |
-| F2.1-S3 | As the orchestrator, I can enforce daily budgets and pause agents when limits are exceeded | P0 | planned |
-| F2.1-S4 | As the orchestrator, I compile daily briefings from all active agents | P1 | planned |
+| F2.1-S1 | As the orchestrator, I can receive all inbound messages and route them to the correct agent | P0 | done |
+| F2.1-S2 | As the orchestrator, I can evaluate gate criteria and manage phase transitions | P0 | done |
+| F2.1-S3 | As the orchestrator, I can enforce daily budgets and pause agents when limits are exceeded | P0 | done |
+| F2.1-S4 | As the orchestrator, I compile daily briefings from all active agents | P1 | done |
 
 **Tasks:**
 
-- `F2.1-T1` — Create `agents/orchestrator/system-prompt.md` — full system prompt per spec Section 4.2, with dynamic placeholders for phase context, budget, gate status
-- `F2.1-T2` — Create `agents/orchestrator/config.json` — agent config: model tier (Tier 3 for decisions, Tier 1 for routing), tools allowed, skills loaded, heartbeat schedule
+- `F2.1-T1` — Create `agents/orchestrator/workspace/IDENTITY.md` + `SOUL.md` — identity and persona per spec Section 4.2, with dynamic placeholders for phase context, budget, gate status
+- `F2.1-T2` — Configure orchestrator agent section in `config/openclaw.json` — model tier (Tier 3 for decisions, Tier 1 for routing), tools allowed, skills loaded, heartbeat schedule
 - `F2.1-T3` — Create `agents/orchestrator/workspace/AGENTS.md` — operating instructions: routing table, escalation rules, budget enforcement, gate evaluation triggers
 - `F2.1-T4` — Create `agents/orchestrator/workspace/SOUL.md` — persona: professional, decisive, honest, economically disciplined
-- `F2.1-T5` — Set up orchestrator workspace directory structure (memory/, skills/ symlinks, BOOT.md for startup checks)
+- `F2.1-T5` — Set up orchestrator workspace (BOOT.md, TOOLS.md, HEARTBEAT.md, USER.md, memory/)
 - `F2.1-T6` — Implement routing logic: orchestrator receives message → determines target agent → dispatches via OpenClaw agent-to-agent messaging
 - `F2.1-T7` — Implement budget enforcement: daily budget tracking, per-agent allocation, kill switch at 3x threshold
 - `F2.1-T8` — Configure orchestrator cron jobs: daily morning briefing, daily gate evaluation, weekly audit trigger
@@ -101,17 +101,17 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F2.2-S1 | As the founder, I can have natural conversations with my AI assistant about my company | P0 | planned |
-| F2.2-S2 | As the core assistant, I can explain what other agents are doing and translate system state into plain language | P0 | planned |
-| F2.2-S3 | As the core assistant, I lead the onboarding questionnaire and build the founder profile | P0 | planned |
+| F2.2-S1 | As the founder, I can have natural conversations with my AI assistant about my company | P0 | done |
+| F2.2-S2 | As the core assistant, I can explain what other agents are doing and translate system state into plain language | P0 | done |
+| F2.2-S3 | As the core assistant, I lead the onboarding questionnaire and build the founder profile | P0 | done |
 
 **Tasks:**
 
-- `F2.2-T1` — Create `agents/core-assistant/system-prompt.md` — full system prompt per spec Section 4.3, with dynamic placeholders for founder profile, phase context, recent wins, blockers
-- `F2.2-T2` — Create `agents/core-assistant/config.json` — agent config: Tier 2 model, tools (read, message), skills (knowledge-graph read, human-task-queue read)
+- `F2.2-T1` — Create `agents/core-assistant/workspace/IDENTITY.md` + `SOUL.md` — identity and persona per spec Section 4.3, with dynamic placeholders for founder profile, phase context, recent wins, blockers
+- `F2.2-T2` — Configure core-assistant agent section in `config/openclaw.json` — Tier 2 model, tools (read, message), skills (knowledge-graph read, human-task-queue read)
 - `F2.2-T3` — Create `agents/core-assistant/workspace/AGENTS.md` — operating instructions: conversational style, escalation to orchestrator, emotional intelligence guidelines
 - `F2.2-T4` — Create `agents/core-assistant/workspace/SOUL.md` — persona: warm, direct, honest, supportive but not sycophantic
-- `F2.2-T5` — Set up core-assistant workspace directory structure
+- `F2.2-T5` — Set up core-assistant workspace (TOOLS.md, HEARTBEAT.md, USER.md, memory/)
 
 ---
 
@@ -123,13 +123,13 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F3.1-S1 | As a first-time founder, I experience a guided onboarding that feels like a conversation, not a form | P0 | planned |
-| F3.1-S2 | As the system, I generate a structured founder profile from the onboarding conversation | P0 | planned |
+| F3.1-S1 | As a first-time founder, I experience a guided onboarding that feels like a conversation, not a form | P0 | done |
+| F3.1-S2 | As the system, I generate a structured founder profile from the onboarding conversation | P0 | done |
 | F3.1-S3 | As the system, I transition to Phase L1 when all onboarding criteria are met | P0 | planned |
 
 **Tasks:**
 
-- `F3.1-T1` — Create `workflows/onboarding.lobster` — Lobster pipeline: welcome → profile questions → config generation → vision statement → gate check → phase transition
+- `F3.1-T1` — Implement onboarding flow via agent workspace instructions (IDENTITY.md, AGENTS.md, BOOT.md) — conversational: welcome → profile questions → config generation → vision statement → gate check → phase transition
 - `F3.1-T2` — Define founder profile schema in `config/schemas/founder-profile.json` — skills, interests, time availability, timezone, capital, success criteria, jurisdiction, risk tolerance, communication prefs
 - `F3.1-T3` — Implement onboarding question flow in core-assistant system prompt — conversational, adaptive, not rigid
 - `F3.1-T4` — Implement founder profile generation: parse conversation → structured JSON → store in knowledge graph
@@ -142,8 +142,8 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F3.2-S1 | As the system, I persist the current phase, start date, and gate status across restarts | P0 | planned |
-| F3.2-S2 | As any agent, I can read the current phase context to adapt my behavior | P0 | planned |
+| F3.2-S1 | As the system, I persist the current phase, start date, and gate status across restarts | P0 | done |
+| F3.2-S2 | As any agent, I can read the current phase context to adapt my behavior | P0 | done |
 
 **Tasks:**
 
@@ -162,7 +162,7 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F4.1-S1 | As any agent, I can store and retrieve decisions, insights, lessons, customer data, and market intelligence | P0 | planned |
+| F4.1-S1 | As any agent, I can store and retrieve decisions, insights, lessons, customer data, and market intelligence | P0 | done |
 | F4.1-S2 | As the system, insights propagate to relevant agents automatically | P1 | planned |
 | F4.1-S3 | As the audit agent, I can read all knowledge graph data for verification | P1 | planned |
 
@@ -187,10 +187,10 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F5.1-S1 | As any agent, I can create a task for the founder to do in the physical world | P0 | planned |
-| F5.1-S2 | As the founder, I receive a daily digest of batched tasks with context and time estimates | P0 | planned |
-| F5.1-S3 | As the founder, I can mark tasks complete and provide completion evidence | P0 | planned |
-| F5.1-S4 | As the system, I respect the founder's quiet hours for non-critical tasks | P1 | planned |
+| F5.1-S1 | As any agent, I can create a task for the founder to do in the physical world | P0 | done |
+| F5.1-S2 | As the founder, I receive a daily digest of batched tasks with context and time estimates | P0 | done |
+| F5.1-S3 | As the founder, I can mark tasks complete and provide completion evidence | P0 | done |
+| F5.1-S4 | As the system, I respect the founder's quiet hours for non-critical tasks | P1 | done |
 
 **Tasks:**
 
@@ -213,10 +213,10 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F6.1-S1 | As the orchestrator, I can evaluate gate criteria against real data sources | P0 | planned |
-| F6.1-S2 | As the system, I produce structured gate reports showing progress toward each criterion | P0 | planned |
-| F6.1-S3 | As the system, I trigger phase transitions when all criteria are met and founder confirms | P0 | planned |
-| F6.1-S4 | As the system, I activate the failure/pivot protocol when gate deadlines are missed | P1 | planned |
+| F6.1-S1 | As the orchestrator, I can evaluate gate criteria against real data sources | P0 | done |
+| F6.1-S2 | As the system, I produce structured gate reports showing progress toward each criterion | P0 | done |
+| F6.1-S3 | As the system, I trigger phase transitions when all criteria are met and founder confirms | P0 | done |
+| F6.1-S4 | As the system, I activate the failure/pivot protocol when gate deadlines are missed | P1 | done |
 
 **Tasks:**
 
@@ -241,11 +241,11 @@
 
 | ID | Story | Priority | Status |
 |----|-------|----------|--------|
-| F7.1-S1 | As the system, I track API costs per agent, per model tier, per request | P0 | planned |
-| F7.1-S2 | As the system, I track infrastructure costs (hosting, domains, tools, payment processing fees) | P0 | planned |
-| F7.1-S3 | As the finance agent, I can calculate derived metrics: cost per customer, cost per dollar earned, agent ROI | P1 | planned |
-| F7.1-S4 | As the system, I maintain a treasury balance (cumulative revenue minus cumulative costs) | P0 | planned |
-| F7.1-S5 | As the orchestrator, I enforce daily budgets and trigger kill switch at 3x overspend | P0 | planned |
+| F7.1-S1 | As the system, I track API costs per agent, per model tier, per request | P0 | done |
+| F7.1-S2 | As the system, I track infrastructure costs (hosting, domains, tools, payment processing fees) | P0 | done |
+| F7.1-S3 | As the finance agent, I can calculate derived metrics: cost per customer, cost per dollar earned, agent ROI | P1 | done |
+| F7.1-S4 | As the system, I maintain a treasury balance (cumulative revenue minus cumulative costs) | P0 | done |
+| F7.1-S5 | As the orchestrator, I enforce daily budgets and trigger kill switch at 3x overspend | P0 | done |
 
 **Tasks:**
 
@@ -688,38 +688,38 @@
 
 ## Backlog Summary
 
-| Epic | Stories | P0 Tasks | P1 Tasks | P2 Tasks |
-|------|---------|----------|----------|----------|
-| 1. Foundation & Infrastructure | 6 | 17 | 6 | 0 |
-| 2. Orchestrator & Core Assistant | 5 | 13 | 1 | 0 |
-| 3. Onboarding System (L0) | 3 | 12 | 0 | 0 |
-| 4. Knowledge Graph | 3 | 7 | 1 | 0 |
-| 5. Human Task Queue | 4 | 6 | 2 | 0 |
-| 6. Progression Engine | 4 | 10 | 0 | 0 |
-| 7. Economics Engine | 5 | 11 | 0 | 0 |
-| 8. Discovery & Research (L1) | 2 | 7 | 4 | 0 |
-| 9. Presence & Validation (L2) | 5 | 10 | 4 | 0 |
-| 10. Offer & Revenue (L3) | 4 | 8 | 5 | 0 |
-| 11. Product-Market Fit (L4) | 5 | 10 | 7 | 0 |
-| 12. Scale Decision (L5) | 3 | 0 | 8 | 0 |
-| 13. Pivot Protocol | 3 | 0 | 8 | 0 |
-| 14. Dashboards | 2 | 0 | 5 | 3 |
-| 15. Templates | 1 | 0 | 0 | 8 |
-| 16. Security & Safety | 3 | 4 | 3 | 1 |
-| **Totals** | **58** | **115** | **54** | **12** |
+| Epic | Stories | Tasks | Done | Status |
+|------|---------|-------|------|--------|
+| 1. Foundation & Infrastructure | 6 | 23 | 23 | DONE |
+| 2. Orchestrator & Core Assistant | 5 | 13 | 11 | DONE (budget/gates need engines) |
+| 3. Onboarding System (L0) | 3 | 12 | 8 | DONE (transition needs progression engine) |
+| 4. Knowledge Graph | 3 | 8 | 5 | DONE (propagation/ACL deferred) |
+| 5. Human Task Queue | 4 | 8 | 6 | DONE (friction detection deferred) |
+| 6. Progression Engine | 4 | 10 | 10 | DONE |
+| 7. Economics Engine | 5 | 11 | 11 | DONE |
+| 8. Discovery & Research (L1) | 2 | 11 | 0 | planned |
+| 9. Presence & Validation (L2) | 5 | 14 | 0 | planned |
+| 10. Offer & Revenue (L3) | 4 | 13 | 0 | planned |
+| 11. Product-Market Fit (L4) | 5 | 17 | 0 | planned |
+| 12. Scale Decision (L5) | 3 | 8 | 0 | planned |
+| 13. Pivot Protocol | 3 | 8 | 0 | planned |
+| 14. Dashboards | 2 | 8 | 0 | planned |
+| 15. Templates | 1 | 8 | 0 | planned |
+| 16. Security & Safety | 3 | 8 | 0 | planned |
+| **Totals** | **58** | **176** | **74** | **42% complete** |
 
 ---
 
 ## Implementation Order (Recommended Sprints)
 
-### Sprint 1: Skeleton (Epic 1)
-Project structure, Docker, gateway config, model tiers, scripts.
+### Sprint 1: Skeleton (Epic 1) — DONE
+Project structure, Docker, gateway config, model tiers, scripts. All tasks complete.
 
-### Sprint 2: Brain (Epics 2 + 3)
-Orchestrator, core assistant, onboarding flow, phase state management.
+### Sprint 2: Brain (Epics 2 + 3) — DONE
+Orchestrator, core assistant, onboarding flow, phase state management. Agent workspaces fully built. Onboarding implemented via workspace instructions (not Lobster pipelines).
 
-### Sprint 3: Memory & Economics (Epics 4 + 5 + 6 + 7)
-Knowledge graph, human task queue, progression engine, economics engine — the four core skills.
+### Sprint 3: Memory & Economics (Epics 4 + 5 + 6 + 7) — DONE
+All four core skills delivered: knowledge graph, human task queue, progression engine, economics engine. Agent TOOLS.md updated with permissions. Config, data files, and tests all in place.
 
 ### Sprint 4: Discovery (Epic 8)
 Research agent, discovery workflow, L1 gate evaluation.

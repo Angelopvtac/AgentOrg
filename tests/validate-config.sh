@@ -91,6 +91,16 @@ if [ -f "$PFILE" ]; then
     check_field "$PFILE" "all(p in d['phases'] for p in ['L0','L1','L2','L3','L4','L5','L6'])" "progression.json has all phases L0-L6"
 fi
 
+# --- economics.json ---
+echo ""
+echo "economics.json:"
+EFILE="$PROJECT_DIR/config/economics.json"
+check_json "$EFILE" "economics.json"
+if [ -f "$EFILE" ]; then
+    check_field "$EFILE" "'budgetRules' in d and 'alerts' in d" "economics.json has 'budgetRules' and 'alerts'"
+    check_field "$EFILE" "d['alerts']['killSwitchAt'] == 3.0" "economics.json kill switch at 3x"
+fi
+
 # --- All other JSON files in config/ ---
 echo ""
 echo "Other config files:"
@@ -98,7 +108,7 @@ for f in "$PROJECT_DIR"/config/*.json; do
     [ -f "$f" ] || continue
     base="$(basename "$f")"
     # Skip openclaw.json (JSON5 — validated above) and files already checked
-    [[ "$base" == "openclaw.json" || "$base" == "models.json" || "$base" == "progression.json" ]] && continue
+    [[ "$base" == "openclaw.json" || "$base" == "models.json" || "$base" == "progression.json" || "$base" == "economics.json" ]] && continue
     check_json "$f" "$base"
 done
 

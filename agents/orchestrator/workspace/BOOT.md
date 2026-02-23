@@ -20,6 +20,9 @@ Confirm these files exist and are valid JSON:
 - `vault/founder-profile.json`
 - `vault/onboarding-state.json`
 - `vault/economics/daily-budget.json`
+- `vault/economics/costs.json`
+- `vault/economics/revenue.json`
+- `vault/economics/treasury.json`
 
 If any file is missing or malformed, log an error. Do NOT attempt to recreate — this indicates a deployment issue.
 

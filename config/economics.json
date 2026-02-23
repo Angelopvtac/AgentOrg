@@ -1,0 +1,43 @@
+{
+  "budgetRules": {
+    "dailyBudgetFormula": "fixed",
+    "defaultDailyLimit": 5.00,
+    "currency": "USD",
+    "emergencyReserve": 0.10,
+    "scalingThreshold": {
+      "description": "When revenue exceeds this multiple of costs, auto-suggest budget increase",
+      "revenueToExpenseRatio": 3.0
+    }
+  },
+  "perAgentAllocation": {
+    "description": "Percentage of daily budget allocated per agent. Orchestrator gets priority.",
+    "orchestrator": 0.30,
+    "core-assistant": 0.20,
+    "default": 0.10
+  },
+  "alerts": {
+    "warnAt": 0.80,
+    "pauseAt": 1.00,
+    "killSwitchAt": 3.00
+  },
+  "modelCosts": {
+    "description": "Estimated cost per 1M tokens for budget projection. Updated as pricing changes.",
+    "tier1": {
+      "input": 0.80,
+      "output": 4.00
+    },
+    "tier2": {
+      "input": 3.00,
+      "output": 15.00
+    },
+    "tier3": {
+      "input": 15.00,
+      "output": 75.00
+    }
+  },
+  "reporting": {
+    "dailySummaryEnabled": true,
+    "weeklySummaryEnabled": true,
+    "includeInBriefing": true
+  }
+}

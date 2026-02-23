@@ -28,6 +28,8 @@ REQUIRED_DIRS=(
     skills
     skills/knowledge-graph
     skills/human-task-queue
+    skills/progression-engine
+    skills/economics-engine
     workflows
     dashboards
     templates
@@ -97,6 +99,7 @@ CONFIG_FILES=(
     config/openclaw.json
     config/models.json
     config/progression.json
+    config/economics.json
 )
 for f in "${CONFIG_FILES[@]}"; do
     if [ -f "$PROJECT_DIR/$f" ]; then
@@ -135,6 +138,9 @@ KNOWLEDGE_FILES=(
     knowledge/human-tasks.json
     knowledge/briefing-state.json
     knowledge/economics/daily-budget.json
+    knowledge/economics/costs.json
+    knowledge/economics/revenue.json
+    knowledge/economics/treasury.json
 )
 for f in "${KNOWLEDGE_FILES[@]}"; do
     if [ -f "$PROJECT_DIR/$f" ]; then
