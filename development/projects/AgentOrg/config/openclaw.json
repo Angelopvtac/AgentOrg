@@ -158,7 +158,9 @@
     "mode": "local",
     "bind": "lan",
     "controlUi": {
-      "allowInsecureAuth": true
+      // Auth enforced — gateway token required for UI access.
+      // Ports bound to 127.0.0.1 in docker-compose.yml; never expose externally.
+      "allowInsecureAuth": false
     },
     "auth": {
       "mode": "token"
