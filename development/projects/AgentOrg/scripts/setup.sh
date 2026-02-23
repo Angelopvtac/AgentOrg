@@ -65,8 +65,18 @@ fi
 echo ""
 echo "[4/6] Checking API keys..."
 
-# shellcheck source=/dev/null
-source "$PROJECT_DIR/.env"
+# Safe .env loading — parse KEY=VALUE lines only, skip comments and empty lines
+while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+    key="$(echo "$key" | xargs)"
+    value="$(echo "$value" | xargs)"
+    # Strip surrounding quotes from value
+    value="${value%\"}"
+    value="${value#\"}"
+    value="${value%\'}"
+    value="${value#\'}"
+    export "$key=$value"
+done < "$PROJECT_DIR/.env"
 
 if [ -n "${OPENROUTER_API_KEY:-}" ]; then
     echo "  OPENROUTER_API_KEY: set"

@@ -52,8 +52,17 @@ check "Gateway HTTP response" "Gateway not responding on port $GATEWAY_PORT. Che
 echo ""
 echo "API Keys:"
 if [ -f "$PROJECT_DIR/.env" ]; then
-    # shellcheck source=/dev/null
-    source "$PROJECT_DIR/.env"
+    # Safe .env loading — parse KEY=VALUE lines only, no arbitrary execution
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+        key="$(echo "$key" | xargs)"
+        value="$(echo "$value" | xargs)"
+        value="${value%\"}"
+        value="${value#\"}"
+        value="${value%\'}"
+        value="${value#\'}"
+        export "$key=$value"
+    done < "$PROJECT_DIR/.env"
 fi
 check "OPENROUTER_API_KEY set" "Add OPENROUTER_API_KEY to $PROJECT_DIR/.env (get one at https://openrouter.ai/keys)" test -n "${OPENROUTER_API_KEY:-}"
 
