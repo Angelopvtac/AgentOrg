@@ -10,18 +10,29 @@ Progressive autonomous company framework built on [OpenClaw](https://github.com/
 
 AgentOrg is a configuration-driven agent framework. There is no frontend application — agents run inside an OpenClaw gateway container, read/write JSON files in a shared vault, and progress through phases as your business hits real milestones.
 
-```
-Founder ──► Channel (Discord/Telegram) ──► OpenClaw Gateway ──► Orchestrator
-                                                                    │
-                                              ┌─────────────────────┼──────────────┐
-                                              │                     │              │
-                                        Core Assistant         Research       Future agents
-                                        (Founder UI)          (L1+ only)     (unlock per phase)
-                                              │                     │              │
-                                              └─────────────────────┴──────────────┘
-                                                                    │
-                                                        Shared Knowledge (Vault)
-                                              decisions · insights · lessons · economics
+```mermaid
+flowchart TD
+    Founder([Founder]) --> Channel["Channel\nDiscord · Telegram · Slack"]
+    Channel --> Gateway["OpenClaw Gateway\n:18791 API · :18792 Bridge"]
+    Gateway --> Orchestrator["Orchestrator\n(CEO / Router)\nTier 1"]
+
+    Orchestrator --> CoreAssistant["Core Assistant\n(Founder UI)\nTier 2"]
+    Orchestrator --> Research["Research\n(L1+ only)\nTier 2"]
+    Orchestrator --> Future["Future Agents\n(unlock per phase)"]
+
+    CoreAssistant --> Vault[(Shared Knowledge Vault)]
+    Research --> Vault
+    Future --> Vault
+    Orchestrator --> Vault
+
+    style Founder fill:#6366f1,color:#fff,stroke:none
+    style Gateway fill:#1e293b,color:#fff,stroke:#334155
+    style Orchestrator fill:#0f172a,color:#fff,stroke:#6366f1
+    style CoreAssistant fill:#0f172a,color:#fff,stroke:#22c55e
+    style Research fill:#0f172a,color:#fff,stroke:#f59e0b
+    style Future fill:#0f172a,color:#94a3b8,stroke:#334155,stroke-dasharray:5 5
+    style Vault fill:#1e1b4b,color:#c4b5fd,stroke:#6366f1
+    style Channel fill:#1e293b,color:#fff,stroke:#334155
 ```
 
 **Orchestrator** is the CEO — routes messages, enforces budgets, evaluates gates, manages phase transitions. **Core Assistant** is the founder's friendly interface — guides onboarding, delivers briefings, translates system state. **Research** activates at L1 to perform market scans and competitive analysis.
@@ -80,6 +91,24 @@ All environment variables are defined in `.env` (copy from `.env.example`):
 ## Phase System
 
 AgentOrg uses a progressive phase system. New agents and capabilities unlock as your business hits real milestones. The full L0 through L2 progression pipeline is implemented and tested end-to-end.
+
+```mermaid
+graph LR
+    L0["L0\nOnboarding"] -->|"profile + vision\n+ channel"| L1["L1\nDiscovery"]
+    L1 -->|"direction + brand\n+ research"| L2["L2\nPresence"]
+    L2 -->|"100 followers\n5% engagement"| L3["L3\nFirst Revenue"]
+    L3 -->|"$1 revenue\n1 customer"| L4["L4\nProduct-Market Fit"]
+    L4 -->|"3x ROI\n15% repeat"| L5["L5\nScale Decision"]
+    L5 -->|"proposal\napproved"| L6["L6\nAutonomous Ops"]
+
+    style L0 fill:#6366f1,color:#fff,stroke:none
+    style L1 fill:#6366f1,color:#fff,stroke:none
+    style L2 fill:#334155,color:#fff,stroke:#6366f1
+    style L3 fill:#334155,color:#fff,stroke:#6366f1
+    style L4 fill:#334155,color:#fff,stroke:#6366f1
+    style L5 fill:#334155,color:#fff,stroke:#6366f1
+    style L6 fill:#334155,color:#fff,stroke:#6366f1
+```
 
 | Phase | Name | Gate Criteria | Agents |
 |-------|------|---------------|--------|
@@ -187,16 +216,48 @@ After enabling, add the bot token to `.env` and restart the container with `dock
 
 Agent workflows are defined as Lobster pipeline files in `workflows/`:
 
+```mermaid
+flowchart LR
+    subgraph daily["Daily Briefing (cron)"]
+        direction LR
+        D1["Gather\nvault data"] --> D2["Compile\nbriefing"] --> D3["Deliver via\ncore-assistant"] --> D4["Update\nstate"]
+    end
+
+    subgraph disc["Discovery (L1 event)"]
+        direction LR
+        R1["Profile\ningestion"] --> R2["Market\nscan"] --> R3["Direction\nselection"] --> R4["Competitive\nanalysis"] --> R5["Brand\nbrief"] --> R6["L1 gate\nverify"]
+    end
+
+    style daily fill:#0f172a,color:#fff,stroke:#22c55e
+    style disc fill:#0f172a,color:#fff,stroke:#f59e0b
+    style D1 fill:#1e293b,color:#fff,stroke:#334155
+    style D2 fill:#1e293b,color:#fff,stroke:#334155
+    style D3 fill:#1e293b,color:#fff,stroke:#334155
+    style D4 fill:#1e293b,color:#fff,stroke:#334155
+    style R1 fill:#1e293b,color:#fff,stroke:#334155
+    style R2 fill:#1e293b,color:#fff,stroke:#334155
+    style R3 fill:#1e293b,color:#fff,stroke:#334155
+    style R4 fill:#1e293b,color:#fff,stroke:#334155
+    style R5 fill:#1e293b,color:#fff,stroke:#334155
+    style R6 fill:#1e293b,color:#fff,stroke:#334155
+```
+
 - **`daily-briefing.lobster`** — 8-step pipeline: gather vault data (phase, budget, tasks, knowledge) → compile briefing → deliver via core-assistant → update state. Cron-triggered, adapts content per phase (L0-L6).
 - **`discovery.lobster`** — 7-step pipeline: founder profile ingestion → market scan → direction selection → competitive analysis → brand brief → L1 gate verification. Event-triggered on L1 transition.
 
 ## Model Tiers
 
-| Tier | Model | Use Case | Approx Cost |
-|------|-------|----------|-------------|
-| 1 — Triage | Claude Haiku 4.5 | Routing, status, simple ops | $0.80/$4.00 per M tokens |
-| 2 — Execution | Claude Sonnet 4.6 | Content, conversations | $3.00/$15.00 per M tokens |
-| 3 — Strategic | Claude Opus 4.6 | Gates, audits, strategy | $15.00/$75.00 per M tokens |
+```mermaid
+block-beta
+    columns 3
+    T1["Tier 1 — Triage\nClaude Haiku 4.5\nRouting · Status · Simple ops\n$0.80 / $4.00 per M tokens"]:1
+    T2["Tier 2 — Execution\nClaude Sonnet 4.6\nContent · Conversations\n$3.00 / $15.00 per M tokens"]:1
+    T3["Tier 3 — Strategic\nClaude Opus 4.6\nGates · Audits · Strategy\n$15.00 / $75.00 per M tokens"]:1
+
+    style T1 fill:#1e293b,color:#22c55e,stroke:#22c55e
+    style T2 fill:#1e293b,color:#f59e0b,stroke:#f59e0b
+    style T3 fill:#1e293b,color:#ef4444,stroke:#ef4444
+```
 
 ## Skills
 
