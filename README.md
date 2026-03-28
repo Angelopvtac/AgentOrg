@@ -69,6 +69,112 @@ docker compose up -d
 
 The gateway control UI is at `http://localhost:18791`. The founder dashboard opens in your browser after generation.
 
+## Example: Zero to L1 in 5 Minutes
+
+This walkthrough takes you from a fresh install to your first phase transition — no live gateway needed.
+
+```bash
+# 1. Simulate a completed onboarding (populates vault with realistic founder data)
+./scripts/simulate-onboarding.sh --simulate
+```
+
+```
+Simulating completed onboarding...
+  Writing founder profile (Sarah Chen, ML engineer, 15h/week)
+  Writing onboarding state (9/9 sections complete)
+  Writing phase state, economics, business direction...
+
+Evaluating L0 Gate Criteria:
+  ✅ founder_profile_complete    — 8/8 fields populated
+  ✅ vision_defined              — "AI-powered content studio" (127 chars)
+  ✅ success_criteria_set        — 3 criteria defined
+  ✅ communication_prefs_set     — async preferred, quiet hours 22:00-08:00
+  ✅ financial_baseline_set      — budget $5.00/day, runway noted
+  ✅ channel_connected           — discord connected
+
+Result: PASS (6/6 criteria met) — Ready for L1 transition
+```
+
+```bash
+# 2. Check the gate status before transitioning
+./scripts/phase-transition.sh --status
+```
+
+```
+Current Phase: L0 (Onboarding)
+Started: 2026-03-28
+Gate Progress: 6/6 criteria passing
+Transition History: (none)
+```
+
+```bash
+# 3. Transition to L1 Discovery
+./scripts/phase-transition.sh --transition
+```
+
+```
+Evaluating L0 gate... PASS (6/6)
+Creating backup... done (knowledge/backups/pre-L1-2026-03-28.tar.gz)
+Transitioning L0 → L1...
+  Updated phase-state.json (currentPhase: L1, phaseName: Discovery)
+  Logged transition in history
+
+✅ Phase transition complete: L0 → L1 (Discovery)
+```
+
+```bash
+# 4. Apply a business template to fast-track L1
+./scripts/apply-template.sh --list
+```
+
+```
+Available templates:
+  content-agency    Inkwell Studio — Content & marketing agency
+  saas-micro        Shiplog — Micro-SaaS product
+  consulting        Practical AI Partners — AI operations consulting
+```
+
+```bash
+./scripts/apply-template.sh --apply saas-micro
+```
+
+```
+Applying template: saas-micro (Shiplog)
+  Writing direction.json... done
+  Writing brand-brief.json... done
+  Writing market-research.json... done
+
+L1 Gate Progress: 3/3 criteria now satisfied
+  ✅ direction_selected     — "Developer productivity micro-SaaS"
+  ✅ brand_brief_complete   — Shiplog, "Ship logs, not excuses"
+  ✅ market_research_done   — 4 findings, 85% confidence
+
+Ready for L2 transition when live metrics are met.
+```
+
+```bash
+# 5. Generate the dashboard to see everything at a glance
+./scripts/generate-dashboard.sh
+```
+
+This opens a self-contained HTML dashboard showing phase status, gate progress, onboarding data, budget, and knowledge graph — all from the vault files the scripts just populated.
+
+```mermaid
+flowchart LR
+    A["Fresh Install\n(L0)"] -->|"simulate\nonboarding"| B["Gates Pass\n(6/6)"]
+    B -->|"phase\ntransition"| C["L1 Discovery"]
+    C -->|"apply\ntemplate"| D["L1 Complete\n(3/3)"]
+    D -->|"generate\ndashboard"| E["Visual Overview"]
+
+    style A fill:#334155,color:#fff,stroke:#6366f1
+    style B fill:#334155,color:#fff,stroke:#22c55e
+    style C fill:#6366f1,color:#fff,stroke:none
+    style D fill:#334155,color:#fff,stroke:#22c55e
+    style E fill:#1e1b4b,color:#c4b5fd,stroke:#6366f1
+```
+
+> **What just happened?** You simulated the entire founder onboarding, proved the L0 gate evaluator works, transitioned to L1, applied a business template that satisfies all L1 criteria, and generated a dashboard — all without starting the Docker container. When you're ready to go live, `docker compose up -d` starts the gateway and your agents pick up right where the vault state left off.
+
 ## Configuration
 
 All environment variables are defined in `.env` (copy from `.env.example`):
