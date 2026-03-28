@@ -17,6 +17,7 @@ services:
       # Agent workspaces
       - ./agents/orchestrator/workspace:/home/node/.openclaw/workspace-orchestrator
       - ./agents/core-assistant/workspace:/home/node/.openclaw/workspace-core-assistant
+      - ./agents/research/workspace:/home/node/.openclaw/workspace-research
       # Shared knowledge (vault)
       - ./knowledge:/home/node/.openclaw/vault
       # Shared skills (read-only — skill definitions are static)

@@ -71,6 +71,26 @@
         "identity": {
           "name": "Core Assistant"
         }
+      },
+      {
+        "id": "research",
+        "name": "Research Agent",
+        // Activated in L1 (Discovery) — orchestrator only routes to this agent when phase >= L1
+        "workspace": "/home/node/.openclaw/workspace-research",
+        "agentDir": "/home/node/.openclaw/agents/research/agent",
+        "model": {
+          // Tier 2 for most research, escalates to Tier 3 for strategic analysis
+          "primary": "openrouter/anthropic/claude-sonnet-4.6",
+          "fallbacks": [
+            "openrouter/anthropic/claude-haiku-4.5"
+          ]
+        },
+        "heartbeat": {
+          "every": "360m"
+        },
+        "identity": {
+          "name": "Research Agent"
+        }
       }
     ]
   },
@@ -102,7 +122,8 @@
       "enabled": true,
       "allow": [
         "orchestrator",
-        "core-assistant"
+        "core-assistant",
+        "research"
       ]
     }
   },

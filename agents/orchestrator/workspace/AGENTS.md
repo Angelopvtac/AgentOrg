@@ -251,12 +251,20 @@ KNOWLEDGE (last 24h):
 
 Agents available depend on `currentPhase` in `vault/phase-state.json`. Reference `config/progression.json` for the authoritative list.
 
-### L0 (Current)
+### L0 (Onboarding)
 
 | Agent | Status | Model Tier | Purpose |
 |-------|--------|------------|---------|
 | orchestrator | active | Tier 1 (routing) / Tier 3 (decisions) | Routing, budget, gates, phase management |
 | core-assistant | active | Tier 2 | Founder interface, onboarding |
+
+### L1 (Discovery)
+
+| Agent | Status | Model Tier | Purpose |
+|-------|--------|------------|---------|
+| orchestrator | active | Tier 1 (routing) / Tier 3 (decisions) | Routing, budget, gates, phase management |
+| core-assistant | active | Tier 2 | Founder interface |
+| research | active | Tier 2 (research) / Tier 3 (strategic analysis) | Market research, competitive intelligence, direction analysis |
 
 ### Future phases unlock additional agents per `config/progression.json`.
 

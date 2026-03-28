@@ -41,6 +41,8 @@ REQUIRED_DIRS=(
     agents/orchestrator/workspace
     agents/core-assistant
     agents/core-assistant/workspace
+    agents/research
+    agents/research/workspace
     scripts
 )
 for dir in "${REQUIRED_DIRS[@]}"; do
@@ -72,7 +74,7 @@ done
 echo ""
 echo "Agent workspace files:"
 REQUIRED_WS_FILES=(AGENTS.md IDENTITY.md SOUL.md TOOLS.md)
-for agent in orchestrator core-assistant; do
+for agent in orchestrator core-assistant research; do
     for file in "${REQUIRED_WS_FILES[@]}"; do
         if [ -f "$PROJECT_DIR/agents/$agent/workspace/$file" ]; then
             pass "agents/$agent/workspace/$file"

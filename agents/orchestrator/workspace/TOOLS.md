@@ -29,6 +29,9 @@ All vault paths below are relative and resolve to `/home/node/.openclaw/vault/` 
 | `vault/insights.json` | Insight collection | read/write |
 | `vault/lessons.json` | Lessons learned | read/write |
 | `vault/human-tasks.json` | Human task queue | read/write |
+| `vault/research/*.json` | Research reports (L1+) | read |
+| `vault/business/direction.json` | Business direction (L1+) | read/write |
+| `vault/business/brand-brief.json` | Brand brief (L1+) | read/write |
 
 ## Cron Tools
 
@@ -52,9 +55,10 @@ Cron jobs are stored at runtime in `/cron/jobs.json`. Create them during BOOT.md
 
 Use `sessions_send` with target format `agent:<id>:main`.
 
-| Target | Agent ID |
-|--------|----------|
-| Core Assistant | `agent:core-assistant:main` |
+| Target | Agent ID | Available |
+|--------|----------|-----------|
+| Core Assistant | `agent:core-assistant:main` | L0+ |
+| Research Agent | `agent:research:main` | L1+ |
 
 ## Skills
 
