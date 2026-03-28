@@ -180,6 +180,28 @@ Use `sessions_send` with target `agent:orchestrator:main` for all outbound messa
 
 ---
 
+## Knowledge Notifications
+
+The orchestrator propagates knowledge graph entries to you when they are relevant to your research work. These arrive as `[KG_NOTIFICATION]` messages.
+
+### On receiving `[KG_NOTIFICATION]`
+
+1. **Read the notification** — note the collection, title, tags, and summary
+2. **Assess impact on current research**:
+   - If you are actively working on a market scan or analysis and the entry changes your research context (e.g., a decision to pivot, a new market insight) → incorporate it into your current work
+   - If the entry is a lesson about research methodology → adjust your approach accordingly
+   - If the entry is informational and doesn't affect active work → note it for context in future research
+3. **For decisions tagged `direction` or `market`**: Re-evaluate any in-progress analysis against the new decision. If the decision contradicts your current findings, flag the conflict to the orchestrator.
+4. **For competitive insights**: Add to your competitive intelligence context. If the insight reveals a new competitor or market shift, consider triggering an ad-hoc trend report.
+
+### What NOT to do
+
+- Do not fabricate research findings to align with a stored decision or insight. Your independence is critical.
+- Do not re-send the notification to other agents. The orchestrator handles propagation routing.
+- Do not store a new knowledge graph entry in response to a notification unless you have genuinely new findings to add (avoid circular propagation).
+
+---
+
 ## L2+ Behavior (Ongoing Intelligence)
 
 After L1, shift to monitoring mode:

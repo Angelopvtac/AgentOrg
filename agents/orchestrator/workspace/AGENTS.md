@@ -260,6 +260,57 @@ KNOWLEDGE (last 24h):
 
 ---
 
+## Knowledge Propagation
+
+When an agent stores an entry in the knowledge graph via `kg_store`, it sends you a `[KG_STORED]` notification (as defined in `skills/knowledge-graph/SKILL.md`). Your job is to route that knowledge to agents who need it.
+
+### Propagation routing table
+
+| Collection | Tags (any match) | Target Agent | Phase Required | Reason |
+|------------|-------------------|--------------|----------------|--------|
+| decisions | any | core-assistant | L0+ | Founder should know about all decisions |
+| decisions | `market`, `direction`, `competitive` | research | L1+ | Affects research context |
+| insights | `onboarding`, `founder`, `communication` | core-assistant | L0+ | Affects founder interaction |
+| insights | `market`, `competitive`, `trend`, `industry` | research | L1+ | Affects research focus |
+| insights | `revenue`, `cost`, `budget` | core-assistant | L1+ | Founder should know financial insights |
+| lessons | any | core-assistant | L0+ | Founder benefits from all lessons learned |
+| lessons | `research`, `market`, `methodology` | research | L1+ | Improves research quality |
+
+### When you store entries directly
+
+When you (the orchestrator) store a knowledge graph entry yourself, skip the notification step and run propagation directly — evaluate the routing table and send `[KG_NOTIFICATION]` messages to matched agents.
+
+### Notification format sent to agents
+
+```
+[KG_NOTIFICATION]
+Collection: <collection>
+Title: <title>
+Summary: <first 200 characters of content>
+Tags: <comma-separated tags>
+Author: <agent who stored it>
+Entry ID: <uuid>
+Action: Review this <collection> entry if relevant to your current work. Read the full entry via kg_read if needed.
+```
+
+### Propagation rules
+
+1. **Phase gating**: Only propagate to agents that are active in the current phase. Do not send notifications to agents that haven't been unlocked yet.
+2. **Deduplication**: If the same entry has already been propagated (check entry ID), do not re-send.
+3. **Batch during briefing**: If multiple entries were stored since the last daily briefing, include them in the briefing compilation rather than sending individual notifications. Only send individual notifications for entries tagged `urgent` or `critical`.
+4. **Cost control**: Propagation uses Tier 1 routing. Do not escalate tier for propagation unless the entry is tagged `strategic` or `critical`.
+5. **Quiet hours**: Respect the founder's quiet hours for entries routed to core-assistant. Queue notifications during quiet hours for delivery after `quietHours.end`, unless tagged `urgent`.
+
+### On receiving `[KG_STORED]`
+
+1. Parse the notification fields (collection, tags, author, phase)
+2. Look up matching rows in the propagation routing table
+3. Filter by current phase (only agents active in this phase)
+4. For each matched agent, send a `[KG_NOTIFICATION]` via `sessions_send`
+5. If no agents match, no action needed — the entry is stored and accessible via `kg_read`/`kg_search`
+
+---
+
 ## Active Agents
 
 Agents available depend on `currentPhase` in `vault/phase-state.json`. Reference `config/progression.json` for the authoritative list.
@@ -309,6 +360,8 @@ Use `sessions_send` with target format `agent:<id>:main`.
 | core-assistant | Phase transition | New phase details for founder notification |
 | core-assistant | Budget alert | Budget threshold crossed, action taken |
 | core-assistant | Gate results | Updated gate evaluation results |
+| core-assistant | `[KG_NOTIFICATION]` | Knowledge graph entry relevant to founder interaction |
+| research | `[KG_NOTIFICATION]` | Knowledge graph entry relevant to market research (L1+) |
 
 ### Messages you receive
 
@@ -317,6 +370,7 @@ Use `sessions_send` with target format `agent:<id>:main`.
 | core-assistant | Onboarding complete | Trigger gate evaluation |
 | core-assistant | Profile updated | Log, check if gate criteria affected |
 | core-assistant | Founder request for status | Compile and return status |
+| any agent | `[KG_STORED]` notification | Evaluate propagation routing table, send `[KG_NOTIFICATION]` to matched agents |
 
 ---
 

@@ -248,6 +248,28 @@ If the founder asks "what's new", "catch me up", "anything I should know", or si
 
 ---
 
+## Knowledge Notifications
+
+The orchestrator propagates knowledge graph entries to you when they are relevant to your work. These arrive as `[KG_NOTIFICATION]` messages.
+
+### On receiving `[KG_NOTIFICATION]`
+
+1. **Read the notification** — note the collection, title, tags, and summary
+2. **Assess relevance to current conversation**:
+   - If the founder is currently in a conversation and the entry is directly relevant → mention it naturally: "By the way, {author} just recorded a {collection}: {title}"
+   - If the founder is not active or the entry is informational → store in your session context for the next interaction or daily briefing
+3. **For decisions**: Always inform the founder at the next natural opportunity. Decisions affect the direction of the business.
+4. **For insights**: Mention if relevant to the current topic. Otherwise, include in the next daily briefing.
+5. **For lessons**: Include in the next daily briefing unless tagged `urgent`.
+
+### What NOT to do
+
+- Do not spam the founder with every notification. Batch informational entries for the daily briefing.
+- Do not re-interpret or modify the entry content. Present it as recorded.
+- Do not act on the entry (e.g., change onboarding flow based on an insight) without the founder's input.
+
+---
+
 ## Escalation Rules
 
 You do NOT handle operational decisions. Route these to the orchestrator:

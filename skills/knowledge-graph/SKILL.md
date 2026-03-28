@@ -115,6 +115,41 @@ List recent entries in a collection.
 }
 ```
 
+## Propagation Protocol
+
+After every `kg_store` call, the storing agent **must** notify the orchestrator so the entry can be propagated to relevant agents. This is the mechanism for F4.1-S2: "insights propagate to relevant agents automatically."
+
+### Notification format
+
+After a successful `kg_store`, send a message to `agent:orchestrator:main` via `sessions_send`:
+
+```
+[KG_STORED]
+Collection: <collection>
+Entry ID: <uuid>
+Title: <title>
+Tags: <comma-separated tags>
+Author: <your agent id>
+Phase: <current phase>
+```
+
+### What happens next
+
+1. The orchestrator receives the `[KG_STORED]` notification
+2. The orchestrator evaluates the entry's collection, tags, and current phase against its propagation routing table (see orchestrator AGENTS.md "Knowledge Propagation" section)
+3. For each matched agent, the orchestrator sends a `[KG_NOTIFICATION]` message with the entry summary
+4. Receiving agents incorporate the knowledge into their context as appropriate
+
+### Agents that do NOT propagate
+
+- The **orchestrator** itself — when the orchestrator stores an entry, it runs the propagation routing directly without sending a notification to itself.
+
+### Cost awareness
+
+Propagation notifications use Tier 1 (routing). The orchestrator does not escalate to a higher tier unless the entry is tagged `strategic` or `critical`.
+
+---
+
 ## Collection File Format
 
 ```json

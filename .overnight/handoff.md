@@ -2,9 +2,9 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 9
+- Iteration: 10
 - Status: CONTINUE
-- Timestamp: 2026-03-28T12:00:00Z
+- Timestamp: 2026-03-28T13:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
@@ -134,6 +134,7 @@ README.md                      — Comprehensive project documentation (quick st
 CONTRIBUTING.md                — Contribution guide (adding agents, skills, workflows, templates, phases, scripts)
 SECURITY.md                    — Security policy and Docker hardening documentation
 smoke/9-documentation.test.sh  — Smoke test: documentation completeness (104 checks)
+smoke/10-knowledge-propagation.test.sh — Smoke test: knowledge graph propagation mechanism (101 checks)
 ```
 
 ## Integration Seams
@@ -334,21 +335,60 @@ smoke/9-documentation.test.sh  — Smoke test: documentation completeness (104 c
   - Phase 17: Cross-document consistency — verifies README references match actual disk state (templates, agents, skills, workflows)
 - All 13 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52, documentation smoke: 104/104)
 
+### Iteration 10
+- Built **Knowledge Graph Propagation Mechanism** — the last V1 critical path feature (F4.1-S2)
+- **Updated `skills/knowledge-graph/SKILL.md`** — added "Propagation Protocol" section:
+  - After any `kg_store` call, the storing agent must send a `[KG_STORED]` notification to `agent:orchestrator:main` via `sessions_send`
+  - Notification format includes: Collection, Entry ID, Title, Tags, Author, Phase
+  - Documents that orchestrator self-stores skip the notification step
+  - Specifies Tier 1 cost for propagation with Tier 3 escalation for strategic/critical entries
+- **Updated `agents/orchestrator/workspace/AGENTS.md`** — added "Knowledge Propagation" section:
+  - Propagation routing table: 6 rules mapping collection × tags to target agents (core-assistant, research) with phase gating (L0+, L1+)
+  - `[KG_NOTIFICATION]` format sent to target agents with Summary, Tags, Action, and kg_read reference
+  - 5 propagation rules: phase gating, deduplication, batch during briefing, cost control (Tier 1), quiet hours respect
+  - Urgent/critical entries bypass batching for immediate delivery
+  - Updated "Messages you receive" table with `[KG_STORED]` from any agent
+  - Updated "Messages you send" table with `[KG_NOTIFICATION]` to core-assistant and research
+- **Updated `agents/core-assistant/workspace/AGENTS.md`** — added "Knowledge Notifications" section:
+  - Handles `[KG_NOTIFICATION]` from orchestrator
+  - Decisions: always inform founder at next opportunity
+  - Insights: mention if relevant to current topic, else batch for daily briefing
+  - Lessons: include in daily briefing unless urgent
+  - Anti-spam: batch informational entries, don't re-interpret content, don't act without founder input
+- **Updated `agents/research/workspace/AGENTS.md`** — added "Knowledge Notifications" section:
+  - Handles `[KG_NOTIFICATION]` from orchestrator
+  - Direction/market decisions: re-evaluate in-progress analysis, flag conflicts
+  - Competitive insights: add to intelligence context, consider ad-hoc trend report
+  - Methodology lessons: adjust research approach
+  - Anti-circular: don't re-send notifications, don't fabricate findings to align with stored entries
+- **Smoke test: `smoke/10-knowledge-propagation.test.sh`** — 101 checks across 14 phases:
+  - Phase 1: Skill propagation protocol (notification format, all fields)
+  - Phase 2: Cost awareness (Tier 1, strategic/critical escalation, self-store handling)
+  - Phase 3: Orchestrator propagation specification (section, routing table, formats)
+  - Phase 4: Routing table completeness (all 6 collection→agent routes)
+  - Phase 5: Phase gating (L0+, L1+, activity checks)
+  - Phase 6: Propagation rules (dedup, batching, cost, quiet hours, urgent/critical)
+  - Phase 7: Notification format (KG_NOTIFICATION fields, kg_read reference)
+  - Phase 8: Orchestrator message table integration (KG_STORED received, KG_NOTIFICATION sent)
+  - Phase 9: Core-assistant notification handling (all collections, batching, anti-spam)
+  - Phase 10: Research agent notification handling (direction, competitive, methodology, anti-circular)
+  - Phase 11: Cross-reference consistency (SKILL→orchestrator→agents, all collections)
+  - Phase 12: Existing agent functionality preserved (all sections across all 3 agents)
+  - Phase 13: Skill definition integrity (all 4 tools, access control, schema, examples)
+  - Phase 14: Tag-based routing coverage (11 key tags in routing table)
+- All 14 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52, documentation smoke: 104/104, knowledge propagation smoke: 101/101)
+
 ## Remaining Opportunities (ranked)
 
-### Feature Completeness (V1 Critical Path)
-
-1. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out in the orchestrator AGENTS.md.
-
 ### Quality & Polish
+
+1. **BACKLOG.md status sync** — Many backlog items still show "planned" when the work has been done by the overnight iterations (e.g., F8.1 research agent tasks, F8.2 discovery workflow, F9.5 daily briefing workflow, F4.1-S2 knowledge propagation).
 
 2. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
 
 3. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
 4. **SECURITY.md threat model** — Could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses) beyond the Docker hardening already documented.
-
-5. **BACKLOG.md status sync** — Many backlog items still show "planned" when the work has been done by the overnight iterations (e.g., F8.1 research agent tasks, F8.2 discovery workflow, F9.5 daily briefing workflow).
 
 ## Known Issues
 
