@@ -2,9 +2,9 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 10
-- Status: CONTINUE
-- Timestamp: 2026-03-28T13:00:00Z
+- Iteration: 11
+- Status: COMPLETE
+- Timestamp: 2026-03-28T14:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
@@ -135,6 +135,7 @@ CONTRIBUTING.md                — Contribution guide (adding agents, skills, wo
 SECURITY.md                    — Security policy and Docker hardening documentation
 smoke/9-documentation.test.sh  — Smoke test: documentation completeness (104 checks)
 smoke/10-knowledge-propagation.test.sh — Smoke test: knowledge graph propagation mechanism (101 checks)
+smoke/11-backlog-consistency.test.sh — Smoke test: backlog status sync with project state (81 checks)
 ```
 
 ## Integration Seams
@@ -378,17 +379,35 @@ smoke/10-knowledge-propagation.test.sh — Smoke test: knowledge graph propagati
   - Phase 14: Tag-based routing coverage (11 key tags in routing table)
 - All 14 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52, documentation smoke: 104/104, knowledge propagation smoke: 101/101)
 
+### Iteration 11
+- Built **Backlog Status Sync** — updated BACKLOG.md to accurately reflect V1 completion state
+- **13 story status changes** from `planned` to `done`:
+  - F1.3-S2 (cost attribution per tier) — economics engine skill defines this
+  - F3.1-S3 (phase transition on criteria) — phase-transition.py (iteration 3)
+  - F4.1-S2 (insight propagation) — knowledge propagation (iteration 10)
+  - F8.1-S1/S2/S3 (research agent capabilities) — research workspace (iteration 4)
+  - F8.2-S1 (discovery workflow) — discovery.lobster (iteration 5)
+  - F9.5-S1 (daily briefing workflow) — daily-briefing.lobster (iteration 5)
+  - F14.1-S1/S2 (founder dashboard) — dashboard generator (iteration 1)
+  - F15.1-S1 (business templates) — 3 templates + apply script (iteration 6)
+  - F16.1-S1 (untrusted input) — anti-injection in agent prompts
+  - F16.2-S1/S2 (financial safety) — economics engine + orchestrator kill switch
+  - F16.3-S1 (local data + env secrets) — .env pattern + .gitignore
+- **Updated backlog summary table** — replaced stale "42% complete" / "MVP DONE" entries with accurate V1 status per epic
+- **Updated sprint descriptions** — consolidated Sprints 1-3 as "V1 Foundation" (done), removed stale Sprint 4 (done), documented overnight iteration contributions
+- **Verified L2+ items remain correctly `planned`** — content agent, social agent, sales agent, finance agent, etc. are future-phase work
+- Smoke test: `smoke/11-backlog-consistency.test.sh` — 81 checks across 14 phases (story statuses, summary table accuracy, sprint descriptions, cross-reference with disk artifacts)
+- All 15 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52, documentation smoke: 104/104, knowledge propagation smoke: 101/101, backlog consistency smoke: 81/81)
+
 ## Remaining Opportunities (ranked)
 
-### Quality & Polish
+### Polish (non-blocking)
 
-1. **BACKLOG.md status sync** — Many backlog items still show "planned" when the work has been done by the overnight iterations (e.g., F8.1 research agent tasks, F8.2 discovery workflow, F9.5 daily briefing workflow, F4.1-S2 knowledge propagation).
+1. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
 
-2. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
+2. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
-3. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
-
-4. **SECURITY.md threat model** — Could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses) beyond the Docker hardening already documented.
+3. **SECURITY.md threat model** — Could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses) beyond the Docker hardening already documented.
 
 ## Known Issues
 
@@ -396,3 +415,22 @@ smoke/10-knowledge-propagation.test.sh — Smoke test: knowledge graph propagati
 2. **shellcheck not installed** — Test suite skips shell linting.
 3. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.
 4. **Channel config default state is commented** — Channels start commented out in openclaw.json but `scripts/enable-channel.sh` automates enabling/disabling. After a full disable→re-enable cycle, the commented template format differs slightly from the original (JSON-formatted vs hand-formatted) — functionally equivalent.
+
+## V1 Completion Assessment
+
+The V1 goal is achieved. The complete L0-L1 infrastructure is operational:
+
+- **3 agents** (orchestrator, core-assistant, research) fully configured with workspace files
+- **4 skills** (knowledge-graph, human-task-queue, progression-engine, economics-engine) defined with tool interfaces
+- **2 workflows** (daily-briefing, discovery) codified as Lobster pipelines
+- **3 business templates** (content-agency, saas-micro, consulting) with apply/reset script
+- **Full lifecycle proven** — L0→L1→L2 transition tested end-to-end
+- **Founder dashboard** — static HTML generated from vault data
+- **8 operational scripts** — setup, health-check, backup, dashboard, simulation, transition, templates, channels
+- **Channel configuration** — Discord and Telegram enable/disable with env var validation
+- **Knowledge propagation** — notification protocol across all agents
+- **15 test suites, 800+ checks** — comprehensive coverage of all features
+- **Documentation** — README, CONTRIBUTING, SECURITY, CLAUDE.md all current
+- **BACKLOG.md** — accurately reflects V1 completion state
+
+Remaining backlog items (Epics 9-13: content agent, social agent, sales agent, finance agent, operations agent, audit agent, strategy agent, pivot protocol) are L2+ features that require a live deployed gateway with real platform API access. They are correctly scoped as post-V1 work.
