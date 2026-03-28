@@ -2,17 +2,18 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 2
+- Iteration: 3
 - Status: CONTINUE
-- Timestamp: 2026-03-28T06:00:00Z
+- Timestamp: 2026-03-28T07:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
-- Stack: OpenClaw gateway (Node.js Docker container) + JSON config/vault files + bash scripts + Python dashboard generator + Python onboarding simulator. No frontend app — this is a configuration-driven agent framework.
+- Stack: OpenClaw gateway (Node.js Docker container) + JSON config/vault files + bash scripts + Python dashboard generator + Python onboarding simulator + Python phase transition engine. No frontend app — this is a configuration-driven agent framework.
 - Run command: `docker compose up -d` (requires `openclaw:local` image pre-built)
 - Test command: `bash tests/run-all.sh`
 - Dashboard: `bash scripts/generate-dashboard.sh` → opens `dashboards/index.html`
 - Simulate onboarding: `bash scripts/simulate-onboarding.sh` → populates vault + evaluates L0 gate
+- Phase transition: `bash scripts/phase-transition.sh --transition` → evaluates gate + transitions phase
 - Port: 18791 (gateway API), 18792 (bridge)
 
 ## What Exists
@@ -25,11 +26,12 @@ This is NOT a web app with routes. It's an OpenClaw gateway with:
 - Channel templates (Discord, Telegram) commented out in config
 - **Founder Dashboard**: Static HTML generated from vault data via `scripts/generate-dashboard.sh`, output to `dashboards/index.html`
 - **Onboarding Simulator**: Python script that populates vault with realistic onboarding data and evaluates L0 gate criteria programmatically
+- **Phase Transition Engine**: Python script that evaluates gate criteria for the current phase and transitions to the next phase when all criteria pass, with backup, state persistence, and history tracking
 
 ### Data Models
 All data is JSON files in `knowledge/` (vault):
 
-- **phase-state.json** — currentPhase (L0), phaseName, phaseStartDate, lastGateEvaluation, gateResults, history[]
+- **phase-state.json** — currentPhase (L0), phaseName, phaseStartDate, lastGateEvaluation, gateResults, history[] (now includes transition entries with type, fromPhase, toPhase, criteria)
 - **founder-profile.json** — personalInfo, skills[], availability, financial, goals, preferences, vision (all null/empty — onboarding not started)
 - **onboarding-state.json** — status ("not-started"), 9 sections each with status/completedAt
 - **economics/daily-budget.json** — dailyLimit ($5), spent, breakdown by tier, alerts thresholds, history
@@ -49,7 +51,7 @@ All data is JSON files in `knowledge/` (vault):
 1. **Setup flow**: Founder runs `scripts/setup.sh` → checks prereqs → creates .env → generates gateway token → validates API key → starts Docker container
 2. **Health check flow**: `scripts/health-check.sh` validates container, gateway, API keys, config, agent workspaces, vault files, skills
 3. **Dashboard flow**: Founder runs `bash scripts/generate-dashboard.sh` → reads all vault JSON → generates `dashboards/index.html` → opens in browser. Shows phase status, gate progress, onboarding progress, budget, treasury, human tasks, knowledge entries, briefing status. Handles both empty state (fresh install) and populated state (mid-onboarding).
-4. **Onboarding simulation flow**: `bash scripts/simulate-onboarding.sh [mode] [vault_dir]` — 5 modes:
+4. **Onboarding simulation flow**: `bash scripts/simulate-onboarding.sh [mode] [vault_dir] [--no-save]` — 5 modes:
    - `--simulate` (default): Populates vault with completed onboarding data, then evaluates L0 gate (exit 0 = all pass, exit 1 = some fail)
    - `--populate`: Writes realistic completed-founder data to vault files
    - `--partial`: Writes partially-completed data (5/9 sections, 3/6 gate criteria pass)
@@ -58,10 +60,17 @@ All data is JSON files in `knowledge/` (vault):
    - `--no-save` flag: Skip writing evaluation results to phase-state.json
    - Outputs formatted gate report showing each criterion's PASS/FAIL with actual values
    - Saves evaluation results + history to phase-state.json (unless --no-save)
-5. **Onboarding flow** (L0, designed but not yet exercised live): Founder messages gateway → orchestrator routes to core-assistant → core-assistant guides through 9 sections (welcome, personal, skills, availability, financial, goals, preferences, vision, review) → vault files populated → orchestrator evaluates L0 gate → transition to L1
-6. **Daily briefing flow**: Cron triggers → orchestrator compiles from vault → sends to core-assistant → core-assistant formats for founder
-7. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
-8. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
+5. **Phase transition flow**: `bash scripts/phase-transition.sh [mode] [vault_dir]` — 4 modes:
+   - `--check` (default): Dry-run — evaluates gate criteria for current phase, reports pass/fail without modifying state
+   - `--transition`: Evaluates gate and transitions to next phase if all criteria pass. Creates backup, updates phase-state.json (currentPhase, phaseName, phaseStartDate), logs transition in history with criteria snapshot
+   - `--force`: Skips gate evaluation and forces transition to next phase (for development/testing)
+   - `--status`: Shows current phase, start date, gate progress, and transition history
+   - Supports L0 and L1 gate evaluation (evaluators for L2-L5 can be added as system progresses)
+   - Exit codes: 0 = success/gate passed, 1 = gate failed, 2 = error (terminal phase, missing config)
+6. **Onboarding flow** (L0, designed but not yet exercised live): Founder messages gateway → orchestrator routes to core-assistant → core-assistant guides through 9 sections → vault files populated → orchestrator evaluates L0 gate → transition to L1
+7. **Daily briefing flow**: Cron triggers → orchestrator compiles from vault → sends to core-assistant → core-assistant formats for founder
+8. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
+9. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
 
 ## File Map
 ```
@@ -84,9 +93,12 @@ scripts/generate-dashboard.sh  — Dashboard generator (bash wrapper → calls g
 scripts/generate-dashboard.py  — Python script that reads vault JSON and outputs dashboards/index.html
 scripts/simulate-onboarding.sh — Onboarding simulation (bash wrapper → calls simulate-onboarding.py)
 scripts/simulate-onboarding.py — Python script: populate vault with onboarding data + evaluate L0 gate criteria
+scripts/phase-transition.sh    — Phase transition (bash wrapper → calls phase-transition.py)
+scripts/phase-transition.py    — Python script: evaluate gate criteria + execute phase transition with backup + history
 dashboards/index.html          — Generated founder status dashboard (static HTML, regenerate with scripts/generate-dashboard.sh)
 smoke/1-founder-dashboard.test.sh — Smoke test: dashboard generation (31 checks)
 smoke/2-onboarding-simulation.test.sh — Smoke test: onboarding simulation & gate evaluation (40 checks across 7 phases)
+smoke/3-phase-transition.test.sh — Smoke test: phase transition engine (39 checks across 9 phases)
 tests/run-all.sh               — Test runner (4 validation suites + smoke tests)
 tests/validate-*.sh            — Individual validation scripts
 docker-compose.yml             — Single gateway container with volume mounts, security hardening
@@ -99,10 +111,11 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - **Agent ↔ Skills**: Skills are markdown specifications (SKILL.md) defining tool interfaces. Agents follow the spec to read/write vault files — there is no code runtime; it's all prompt-driven behavior.
 - **Config ↔ Gateway**: `config/openclaw.json` (JSON5) is mounted read-only into the container. Changes require container restart.
 - **Cron ↔ Orchestrator**: Orchestrator creates runtime cron jobs during BOOT.md execution (stored in Docker volume, not in git).
-- **Phase System**: `config/progression.json` defines gates → orchestrator evaluates via progression-engine skill → results stored in `knowledge/phase-state.json` → phase transitions unlock new agents.
+- **Phase System**: `config/progression.json` defines gates → orchestrator evaluates via progression-engine skill → results stored in `knowledge/phase-state.json` → phase transitions unlock new agents. Now scriptable via `scripts/phase-transition.py` with gate evaluation + state update + history tracking.
 - **Budget Enforcement**: Economics engine logs costs → updates daily-budget → orchestrator heartbeat checks thresholds → alerts/pauses via core-assistant.
 - **Dashboard ↔ Vault**: `scripts/generate-dashboard.py` reads all vault JSON files + `config/progression.json` → evaluates gate criteria in Python → generates self-contained HTML. No server needed; static file opened in browser.
-- **Simulation ↔ Vault**: `scripts/simulate-onboarding.py` writes realistic onboarding data to vault JSON files and evaluates L0 gate criteria using the same logic as the dashboard generator. Gate evaluation results are persisted to `phase-state.json` with history tracking. This proves the data flow from onboarding → vault → gate evaluation works without needing the live gateway.
+- **Simulation ↔ Vault**: `scripts/simulate-onboarding.py` writes realistic onboarding data to vault JSON files and evaluates L0 gate criteria using the same logic as the dashboard generator. Gate evaluation results are persisted to `phase-state.json` with history tracking.
+- **Transition ↔ Vault**: `scripts/phase-transition.py` reads phase-state.json + progression.json → evaluates gate criteria for current phase → if all pass, creates backup (via backup.sh) → updates phase-state.json with new phase, start date, gate results → logs transition in history array with from/to phases and criteria snapshot. Supports L0 and L1 gate evaluators; others can be added as the system progresses.
 
 ## Iteration Log
 ### Iteration 0
@@ -126,50 +139,59 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 
 ### Iteration 2
 - Built **Onboarding Simulation & L0 Gate Evaluation** — proves the core data flow works end-to-end
-- Created `scripts/simulate-onboarding.py` — Python script with 5 modes: simulate (populate + evaluate), populate, partial, evaluate, reset
+- Created `scripts/simulate-onboarding.py` — Python script with 5 modes: simulate, populate, partial, evaluate, reset
 - Created `scripts/simulate-onboarding.sh` — bash wrapper matching existing script patterns
-- Gate evaluator checks all 6 L0 criteria (profile-complete, skills-identified, availability-set, financial-baseline, vision-defined, onboarding-complete) with detailed actual-vs-target reporting
-- Realistic founder data: Elena Marchetti, freelance writing SaaS founder, 5 skills, 15 hrs/week, moderate risk tolerance, 250+ char vision statement
-- Three data states: complete (6/6 pass), partial (3/6 pass — profile + skills pass, availability/financial/vision/onboarding fail), empty (0/6 pass)
-- Evaluation results persist to `phase-state.json`: updates lastGateEvaluation timestamp, stores per-criterion gateResults, appends to history array
-- Dashboard coherence verified: simulated vault data produces correct 6/6 and 9/9 in the dashboard
-- Smoke test: `smoke/2-onboarding-simulation.test.sh` — 40 checks across 7 phases (complete simulation, partial evaluation, empty state, persistence, dashboard coherence, exit codes, bash wrapper)
-- All 6 test suites pass (structure: 56/56, config: 13/13, schemas: 22/22, scripts: 36/36, dashboard smoke: 31/31, onboarding smoke: 40/40)
+- Gate evaluator checks all 6 L0 criteria with detailed actual-vs-target reporting
+- Realistic founder data: Elena Marchetti, freelance writing SaaS founder
+- Three data states: complete (6/6 pass), partial (3/6 pass), empty (0/6 pass)
+- Evaluation results persist to phase-state.json with history tracking
+- Smoke test: `smoke/2-onboarding-simulation.test.sh` — 40 checks across 7 phases
+- All 6 test suites pass
+
+### Iteration 3
+- Built **Phase Transition Engine** — completes the progression loop (gate eval → phase transition)
+- Created `scripts/phase-transition.py` — Python script with 4 modes: check (dry-run), transition, force, status
+- Created `scripts/phase-transition.sh` — bash wrapper matching existing patterns
+- Gate evaluation for L0 (6 criteria) and L1 (3 criteria: direction-selected, brand-brief-complete, market-research-done)
+- Transition flow: evaluate gate → create backup (via backup.sh) → update phase-state.json (currentPhase, phaseName, phaseStartDate) → log transition in history with type, fromPhase, toPhase, gateStatus, criteria snapshot
+- Check mode is a safe dry-run that reports gate status without modifying state
+- Force mode skips gate evaluation for development/testing scenarios
+- Status mode shows current phase, start date, gate progress, and transition history
+- Terminal phase (L6) correctly rejects further transitions with exit code 2
+- Dashboard coherence verified: after L0→L1 transition, dashboard correctly shows L1/Discovery
+- Smoke test: `smoke/3-phase-transition.test.sh` — 39 checks across 9 phases (check-pass, check-fail, transition execution, rejection, force, status, terminal phase, bash wrapper, dashboard coherence)
+- All 7 test suites pass (structure: 56/56, config: 13/13, schemas: 22/22, scripts: 42/42, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39)
 
 ## Remaining Opportunities (ranked)
 
 ### Feature Completeness (V1 Critical Path)
 
-1. **L0→L1 transition implementation** — The gate evaluation now works (iteration 2 proved it). Next: implement the actual phase transition script that updates phase-state.json from L0→L1 when all criteria pass (update currentPhase, phaseName, phaseStartDate, log transition in history). Could extend simulate-onboarding.py with a `--transition` mode or create a separate `scripts/phase-transition.py`.
+1. **Research agent workspace (L1)** — Backlog Epic 8 is entirely "planned". V1 should include at least the research agent workspace files (AGENTS.md, SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md) so L1 has something to unlock to when the gate passes. The phase transition engine already transitions to L1 — but there's no research agent to activate.
 
-2. **Research agent workspace (L1)** — Backlog Epic 8 is entirely "planned". V1 should include at least the research agent workspace files (AGENTS.md, SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md) so L1 has something to unlock to when the gate passes.
+2. **Workflow definitions** — `workflows/` dir is empty with only `.gitkeep`. The daily-briefing, discovery, and content-pipeline workflows referenced in BACKLOG are unimplemented. At minimum, a `workflows/daily-briefing.lobster` template.
 
-3. **Workflow definitions** — `workflows/` dir is empty with only `.gitkeep`. The daily-briefing, discovery, and content-pipeline workflows referenced in BACKLOG are unimplemented. At minimum, a `workflows/daily-briefing.lobster` template.
+3. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
 
-4. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
+4. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
 
-5. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
+5. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
 
-6. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
-
-7. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
+6. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
 
 ### Quality & Polish
 
-8. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
+7. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
 
-9. **Vault backup before phase transitions** — Automatic backup trigger when phase changes (safety net).
+8. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
-10. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
-
-11. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
+9. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
 
 ## Known Issues
 
 1. **No workflows defined** — `workflows/` directory is empty. Lobster pipelines referenced in backlog don't exist.
 2. **No templates** — `templates/` directory is empty. Business-type templates not created.
 3. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
-4. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run.
+4. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
 5. **shellcheck not installed** — Test suite skips shell linting.
 6. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.
-7. **No L0→L1 transition script** — Gate evaluation works but the actual phase transition (updating phase-state.json) is not yet scripted.
+7. **No research agent workspace** — L1 unlocks a "research" agent per progression.json, but no workspace files exist for it yet. Transition works but the agent has no configuration.
