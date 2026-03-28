@@ -6,39 +6,33 @@
 
 Progressive autonomous company framework built on [OpenClaw](https://github.com/nicepkg/openclaw). Start with two AI agents and a conversation. Scale to a full autonomous organization as your business grows.
 
+## How It Works
+
+AgentOrg is a configuration-driven agent framework. There is no frontend application — agents run inside an OpenClaw gateway container, read/write JSON files in a shared vault, and progress through phases as your business hits real milestones.
+
+```
+Founder ──► Channel (Discord/Telegram) ──► OpenClaw Gateway ──► Orchestrator
+                                                                    │
+                                              ┌─────────────────────┼──────────────┐
+                                              │                     │              │
+                                        Core Assistant         Research       Future agents
+                                        (Founder UI)          (L1+ only)     (unlock per phase)
+                                              │                     │              │
+                                              └─────────────────────┴──────────────┘
+                                                                    │
+                                                        Shared Knowledge (Vault)
+                                              decisions · insights · lessons · economics
+```
+
+**Orchestrator** is the CEO — routes messages, enforces budgets, evaluates gates, manages phase transitions. **Core Assistant** is the founder's friendly interface — guides onboarding, delivers briefings, translates system state. **Research** activates at L1 to perform market scans and competitive analysis.
+
 ## Prerequisites
 
 - **Docker** with Docker Compose v2
+- **Python 3** (for scripts — dashboard generator, simulation, transitions)
 - **OpenRouter API key** ([get one here](https://openrouter.ai/keys))
 - **openssl** and **curl** (for setup)
 - Docker image `openclaw:local` built from [OpenClaw source](https://github.com/nicepkg/openclaw)
-
-## Architecture
-
-```
-                    ┌─────────────────────────────────┐
-                    │        Inbound Channels          │
-                    │   Discord · Telegram · Slack     │
-                    └──────────────┬──────────────────┘
-                                   │
-                    ┌──────────────▼──────────────────┐
-                    │      OpenClaw Gateway            │
-                    │   :18791 (API) · :18792 (Bridge) │
-                    └──────────────┬──────────────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              │                    │                     │
-    ┌─────────▼────────┐ ┌────────▼─────────┐          │
-    │   Orchestrator    │ │  Core Assistant   │    Future agents
-    │   (CEO/Router)    │ │  (Founder UI)     │    unlock with
-    │   Tier 1 default  │ │  Tier 2 default   │    each phase
-    └──────────────────┘ └──────────────────┘          │
-              │                    │                     │
-    ┌─────────▼────────────────────▼─────────────────────▼──┐
-    │                   Shared Knowledge (Vault)             │
-    │   decisions · insights · lessons · economics · tasks   │
-    └───────────────────────────────────────────────────────┘
-```
 
 ## Quick Start
 
@@ -57,9 +51,12 @@ docker compose up -d
 
 # 5. Verify everything is healthy
 ./scripts/health-check.sh
+
+# 6. View the founder dashboard
+./scripts/generate-dashboard.sh
 ```
 
-The gateway control UI is accessible at `http://localhost:18791`.
+The gateway control UI is at `http://localhost:18791`. The founder dashboard opens in your browser after generation.
 
 ## Configuration
 
@@ -73,12 +70,187 @@ All environment variables are defined in `.env` (copy from `.env.example`):
 | `OPENROUTER_API_KEY` | Yes | Primary AI provider key ([openrouter.ai/keys](https://openrouter.ai/keys)) |
 | `ANTHROPIC_API_KEY` | No | Optional direct Anthropic API key |
 | `OLLAMA_BASE_URL` | No | Optional local Ollama endpoint |
-| `DISCORD_BOT_TOKEN` | No | Discord bot token (when channels are enabled) |
-| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token (when channels are enabled) |
+| `DISCORD_BOT_TOKEN` | No | Discord bot token (enable with `scripts/enable-channel.sh`) |
+| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token (enable with `scripts/enable-channel.sh`) |
 | `SLACK_BOT_TOKEN` | No | Slack bot token (when channels are enabled) |
 | `AGENTORG_TIMEZONE` | No | Timezone for cron jobs (default: `UTC`) |
 | `AGENTORG_DAILY_BUDGET` | No | Daily API spend limit in USD (default: `5.00`) |
 | `AGENTORG_FOUNDER_NAME` | No | Your name (used in agent prompts) |
+
+## Phase System
+
+AgentOrg uses a progressive phase system. New agents and capabilities unlock as your business hits real milestones. The full L0 through L2 progression pipeline is implemented and tested end-to-end.
+
+| Phase | Name | Gate Criteria | Agents |
+|-------|------|---------------|--------|
+| **L0** | Onboarding | Profile complete, vision defined, success criteria, comm prefs, financial baseline, channel connected | Orchestrator, Core Assistant |
+| **L1** | Discovery | Direction selected, brand brief complete, market research done | + Research |
+| **L2** | Presence | 100 followers, 5% engagement | + Content, Social |
+| **L3** | First Revenue | $1 revenue, 1 paying customer | + Sales, Compliance |
+| **L4** | Product-Market Fit | 3x revenue vs cost, 15% repeat | + Finance, Operations, Audit |
+| **L5** | Scale Decision | Scaling proposal approved | + Strategy |
+| **L6** | Autonomous Ops | Continuous health monitoring | All agents active |
+
+### Working with Phases
+
+```bash
+# Check current phase and gate progress
+./scripts/phase-transition.sh --status
+
+# Evaluate gate criteria (dry-run, no state change)
+./scripts/phase-transition.sh --check
+
+# Transition to next phase (requires all gate criteria to pass)
+./scripts/phase-transition.sh --transition
+
+# Force transition (development/testing only)
+./scripts/phase-transition.sh --force
+```
+
+## Founder Dashboard
+
+A self-contained HTML dashboard generated from vault data. Shows phase status, gate progress, onboarding completion, budget breakdown, treasury, human tasks, knowledge graph entries, and briefing history.
+
+```bash
+# Generate and open the dashboard
+./scripts/generate-dashboard.sh
+
+# Output: dashboards/index.html (open in any browser)
+```
+
+The dashboard handles both empty state (fresh install) and populated state (mid-progression). Dark theme, responsive from 375px mobile to 1440px desktop.
+
+## Onboarding Simulation
+
+Test the full onboarding flow without a live gateway. Populates vault with realistic founder data and evaluates L0 gate criteria programmatically.
+
+```bash
+# Full simulation: populate + evaluate (default)
+./scripts/simulate-onboarding.sh
+
+# Just populate vault with completed onboarding data
+./scripts/simulate-onboarding.sh --populate
+
+# Partial data (5/9 sections complete, 3/6 gate criteria pass)
+./scripts/simulate-onboarding.sh --partial
+
+# Evaluate gate criteria against current vault state
+./scripts/simulate-onboarding.sh --evaluate
+
+# Reset vault to fresh-install state
+./scripts/simulate-onboarding.sh --reset
+```
+
+## Business Templates
+
+Three starter templates to fast-track through L1 Discovery. Each template pre-seeds direction, brand brief, and market research data — satisfying all 3 L1 gate criteria.
+
+| Template | Brand | Description |
+|----------|-------|-------------|
+| `content-agency` | Inkwell Studio | Content & marketing agency |
+| `saas-micro` | Shiplog | Micro-SaaS product |
+| `consulting` | Practical AI Partners | AI operations consulting |
+
+```bash
+# List available templates
+./scripts/apply-template.sh --list
+
+# Preview a template
+./scripts/apply-template.sh --preview content-agency
+
+# Apply a template (writes to vault)
+./scripts/apply-template.sh --apply content-agency
+
+# Reset L1 business data
+./scripts/apply-template.sh --reset
+```
+
+## Channel Configuration
+
+Enable Discord or Telegram as inbound channels for the gateway.
+
+```bash
+# Check channel status
+./scripts/enable-channel.sh --status
+
+# Enable a channel (validates env var, updates gateway config)
+./scripts/enable-channel.sh --enable discord
+./scripts/enable-channel.sh --enable telegram
+
+# Disable a channel
+./scripts/enable-channel.sh --disable discord
+```
+
+After enabling, add the bot token to `.env` and restart the container with `docker compose up -d`.
+
+## Workflow Pipelines
+
+Agent workflows are defined as Lobster pipeline files in `workflows/`:
+
+- **`daily-briefing.lobster`** — 8-step pipeline: gather vault data (phase, budget, tasks, knowledge) → compile briefing → deliver via core-assistant → update state. Cron-triggered, adapts content per phase (L0-L6).
+- **`discovery.lobster`** — 7-step pipeline: founder profile ingestion → market scan → direction selection → competitive analysis → brand brief → L1 gate verification. Event-triggered on L1 transition.
+
+## Model Tiers
+
+| Tier | Model | Use Case | Approx Cost |
+|------|-------|----------|-------------|
+| 1 — Triage | Claude Haiku 4.5 | Routing, status, simple ops | $0.80/$4.00 per M tokens |
+| 2 — Execution | Claude Sonnet 4.6 | Content, conversations | $3.00/$15.00 per M tokens |
+| 3 — Strategic | Claude Opus 4.6 | Gates, audits, strategy | $15.00/$75.00 per M tokens |
+
+## Skills
+
+Skills are markdown specifications that define tool interfaces for agents. Agents follow the spec to read/write vault files — there is no code runtime; behavior is prompt-driven.
+
+| Skill | Tools | Purpose |
+|-------|-------|---------|
+| `knowledge-graph` | kg_store, kg_read, kg_search, kg_list | Institutional memory: decisions, insights, lessons |
+| `human-task-queue` | htq_create, htq_list, htq_complete, htq_digest | Founder task tracking with priorities and quiet hours |
+| `progression-engine` | gate_evaluate, gate_report, phase_get, transition | Phase management and gate evaluation |
+| `economics-engine` | econ_log_cost, econ_log_revenue, get_treasury, get_budget_status | Financial tracking and budget enforcement |
+
+## Scripts Reference
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/setup.sh` | Interactive first-run configuration |
+| `scripts/health-check.sh` | System health verification (exit code = failures) |
+| `scripts/backup.sh` | Timestamped archive of knowledge + config + workspaces |
+| `scripts/generate-dashboard.sh` | Generate founder status dashboard |
+| `scripts/simulate-onboarding.sh` | Onboarding simulation and L0 gate evaluation |
+| `scripts/phase-transition.sh` | Phase transition engine with gate evaluation |
+| `scripts/apply-template.sh` | Business template application for L1 fast-track |
+| `scripts/enable-channel.sh` | Channel configuration manager (Discord/Telegram) |
+
+## Directory Structure
+
+| Path | Purpose |
+|------|---------|
+| `config/` | Gateway config (`openclaw.json`), model tiers, progression, economics, schemas |
+| `agents/orchestrator/workspace/` | CEO agent — routing, decisions, budget, phase management |
+| `agents/core-assistant/workspace/` | Founder interface — conversations, onboarding, briefings |
+| `agents/research/workspace/` | Market researcher — scans, direction analysis, brand support (L1+) |
+| `skills/` | Skill specifications (knowledge-graph, human-task-queue, progression-engine, economics-engine) |
+| `workflows/` | Lobster pipeline definitions (daily-briefing, discovery) |
+| `knowledge/` | Shared vault — runtime JSON state for all agents |
+| `dashboards/` | Generated HTML dashboards |
+| `templates/` | Business-type starter templates (content-agency, saas-micro, consulting) |
+| `scripts/` | Operational scripts (setup, health-check, backup, dashboard, simulation, transitions, templates, channels) |
+| `smoke/` | Smoke tests (8 suites, 500+ checks) |
+
+## Testing
+
+```bash
+# Run all tests (structure, config, schemas, scripts, and 8 smoke test suites)
+./tests/run-all.sh
+```
+
+The test suite includes:
+- **Structure validation** — required directories, files, workspace completeness
+- **Config validation** — JSON syntax, required fields, agent registration
+- **Schema validation** — vault file schema compliance
+- **Script validation** — script existence, permissions, syntax
+- **Smoke tests** — 8 end-to-end test suites covering dashboard generation, onboarding simulation, phase transitions, research agent integration, workflow definitions, business templates, channel configuration, and full lifecycle integration (L0 → L1 → L2)
 
 ## Troubleshooting
 
@@ -88,7 +260,7 @@ All environment variables are defined in `.env` (copy from `.env.example`):
 - Verify `.env` has `OPENCLAW_GATEWAY_TOKEN` set
 
 **Health check failures:**
-- Run `./scripts/health-check.sh` — it now shows actionable fix hints for each failure
+- Run `./scripts/health-check.sh` — it shows actionable fix hints for each failure
 - Ensure Docker is running: `docker info`
 - Check gateway port isn't in use: `ss -tlnp | grep 18791`
 
@@ -100,68 +272,9 @@ All environment variables are defined in `.env` (copy from `.env.example`):
 - Check memory: the container has a 4GB limit. Run `docker stats agentorg-gateway`
 - Check for config errors: `docker compose logs agentorg-gateway --tail 50`
 
-## Directory Structure
+**Dashboard shows stale data:**
+- Re-run `./scripts/generate-dashboard.sh` — the dashboard is a static snapshot, not live-updating
 
-| Path | Purpose |
-|------|---------|
-| `config/` | Gateway config (`openclaw.json`), model tiers, schemas |
-| `config/models.json` | 3-tier model system (Triage/Execution/Strategic) |
-| `agents/orchestrator/` | CEO agent — routing, decisions, phase management |
-| `agents/core-assistant/` | Founder interface — conversations, onboarding |
-| `knowledge/` | Shared vault — persistent data for all agents |
-| `skills/knowledge-graph/` | Institutional memory: decisions, insights, lessons |
-| `skills/human-task-queue/` | Founder task tracking with priorities and quiet hours |
-| `workflows/` | Lobster pipeline definitions |
-| `dashboards/` | Founder-facing HTML dashboards |
-| `templates/` | Business-type starter templates |
-| `scripts/` | Operational scripts (setup, health-check, backup) |
+## License
 
-## Phase System
-
-AgentOrg uses a progressive phase system. New agents and capabilities unlock as your business hits real milestones.
-
-| Phase | Name | Gate | Agents Unlocked |
-|-------|------|------|-----------------|
-| L0 | Onboarding | Profile + vision complete | Orchestrator, Core Assistant |
-| L1 | Discovery | Direction selected, brand brief | + Research |
-| L2 | Presence | 100 followers, 5% engagement | + Content, Social |
-| L3 | First Revenue | $1 revenue, 1 paying customer | + Sales, Compliance |
-| L4 | Product-Market Fit | 3x revenue vs cost, 15% repeat | + Finance, Operations, Audit |
-| L5 | Scale Decision | Scaling proposal approved | + Strategy |
-| L6 | Autonomous Ops | Continuous health monitoring | All agents active |
-
-## Model Tiers
-
-| Tier | Model | Use Case | Approx Cost |
-|------|-------|----------|-------------|
-| 1 — Triage | Claude Haiku 4.5 | Routing, status, simple ops | $0.80/$4.00 per M tokens |
-| 2 — Execution | Claude Sonnet 4.6 | Content, conversations | $3.00/$15.00 per M tokens |
-| 3 — Strategic | Claude Opus 4.6 | Gates, audits, strategy | $15.00/$75.00 per M tokens |
-
-## Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/setup.sh` | Interactive first-run configuration |
-| `scripts/health-check.sh` | System health verification (exit code = failures) |
-| `scripts/backup.sh` | Timestamped archive of knowledge + config + workspaces |
-| `tests/run-all.sh` | Run all validation tests (structure, config, schemas, scripts) |
-
-## Current Status
-
-**Sprint 3 complete** — Full system operational.
-
-| Sprint | Scope | Status |
-|--------|-------|--------|
-| 1 | Project scaffold, gateway config, agent workspace structure | Done |
-| 2 | Orchestrator brain (routing, budget, gates, phase transitions), core-assistant onboarding flow (9 sections) | Done |
-| 3 | E2E validation, Knowledge Graph skill, Human Task Queue skill, Daily Briefing system | Done |
-
-### What's working:
-- Orchestrator routes messages, enforces budget, evaluates L0 gate (6 criteria), manages phase transitions
-- Core-assistant guides founder through 9-section onboarding with vault persistence
-- Knowledge Graph stores decisions, insights, and lessons with search/filter
-- Human Task Queue tracks founder action items with priority and quiet hours
-- Daily Briefing compiles status from all vault files and delivers via core-assistant
-- Cron jobs: daily gate check, daily budget reset, daily briefing
-- Health checks, backups, and full vault structure validated
+MIT

@@ -2,9 +2,9 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 8
+- Iteration: 9
 - Status: CONTINUE
-- Timestamp: 2026-03-28T11:00:00Z
+- Timestamp: 2026-03-28T12:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
@@ -130,6 +130,10 @@ tests/run-all.sh               — Test runner (4 validation suites + smoke test
 tests/validate-*.sh            — Individual validation scripts
 docker-compose.yml             — Single gateway container with volume mounts for 3 agents, security hardening
 BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, tasks with status)
+README.md                      — Comprehensive project documentation (quick start, phase system, features, scripts, troubleshooting)
+CONTRIBUTING.md                — Contribution guide (adding agents, skills, workflows, templates, phases, scripts)
+SECURITY.md                    — Security policy and Docker hardening documentation
+smoke/9-documentation.test.sh  — Smoke test: documentation completeness (104 checks)
 ```
 
 ## Integration Seams
@@ -255,22 +259,6 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - Smoke test: `smoke/6-business-templates.test.sh` — 122 checks across 13 phases (template structure, manifests, direction files, brand briefs, research reports, script structure, list/preview/apply/reset modes, error handling, progression coherence)
 - All 10 test suites pass (structure: 78/78, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122)
 
-## Remaining Opportunities (ranked)
-
-### Feature Completeness (V1 Critical Path)
-
-1. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out in the orchestrator AGENTS.md.
-
-2. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist. README could use a quickstart walkthrough.
-
-### Quality & Polish
-
-3. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
-
-4. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
-
-5. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
-
 ### Iteration 7
 - Built **Channel Configuration Manager** — enables/disables Discord and Telegram channels in the gateway config
 - Created `scripts/enable-channel.py` — Python script with 3 modes:
@@ -306,6 +294,61 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
   - Research report counter now filters to `.json` files only (excludes `.gitkeep`)
 - This integration test exercises the full chain: simulate-onboarding.py → phase-transition.py → apply-template.py → phase-transition.py → generate-dashboard.py
 - All 12 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52)
+
+### Iteration 9
+- Built **V1 Documentation** — comprehensive README rewrite + CONTRIBUTING update + documentation smoke test
+- **README.md rewritten from scratch** — was frozen at "Sprint 3 complete" and missing 8 iterations of features:
+  - Added "How It Works" section with architecture diagram explaining the configuration-driven agent framework model
+  - Added Python 3 as a prerequisite (required by dashboard, simulation, transition, template scripts)
+  - Expanded Quick Start to include dashboard generation step
+  - Added full sections for: Founder Dashboard, Onboarding Simulation, Business Templates, Channel Configuration, Workflow Pipelines
+  - Added "Working with Phases" section with concrete CLI commands for phase-transition.sh modes
+  - Added Skills reference table with all 4 skills and their tool interfaces
+  - Updated Scripts Reference table from 4 scripts to all 8
+  - Updated Directory Structure table to include all directories (agents/research, workflows, templates, smoke)
+  - Updated Testing section to reference 8 smoke test suites and 500+ checks
+  - Added Troubleshooting entry for stale dashboard data
+  - Removed stale "Current Status" / "Sprint 3 complete" / "What's working" sections
+- **CONTRIBUTING.md expanded** — was only 88 lines covering 3 contribution types:
+  - Added "Adding a New Workflow" section (Lobster pipeline format)
+  - Added "Adding a New Business Template" section (template.json manifest, auto-discovery)
+  - Added "Adding a New Script" section (bash wrapper + Python implementation pattern)
+  - Expanded "Adding a New Agent" from 6 steps to 10 (includes agentToAgent.allow, orchestrator TOOLS.md, validate-structure.sh, smoke test)
+  - Added "Adding a New Phase" step for gate evaluator in phase-transition.py
+  - Updated Conventions section to include templates, workflows, and smoke test naming patterns
+  - Updated Validation section to describe all 4 validation suites + 8 smoke test suites
+- **Smoke test: `smoke/9-documentation.test.sh`** — 104 checks across 17 phases:
+  - Phase 1: Documentation files exist (README, CONTRIBUTING, SECURITY, LICENSE, CLAUDE.md, BACKLOG.md)
+  - Phase 2-3: README covers all agents (3) and all scripts (8)
+  - Phase 4: README covers all skills (4)
+  - Phase 5: README covers all 7 phases with names
+  - Phase 6: README covers all 3 model tiers with names
+  - Phase 7: README covers all key features (dashboard, simulation, transitions, templates, channels, workflows)
+  - Phase 8: README covers environment variables (6 key vars)
+  - Phase 9: README covers directory structure (9 directories)
+  - Phase 10: README covers testing
+  - Phase 11: No stale content (no "Sprint 3 complete", no "What's working" section)
+  - Phase 12-13: Quick start and troubleshooting completeness
+  - Phase 14-15: CONTRIBUTING covers all 6 contribution types and conventions
+  - Phase 16: SECURITY covers key hardening areas
+  - Phase 17: Cross-document consistency — verifies README references match actual disk state (templates, agents, skills, workflows)
+- All 13 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52, documentation smoke: 104/104)
+
+## Remaining Opportunities (ranked)
+
+### Feature Completeness (V1 Critical Path)
+
+1. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out in the orchestrator AGENTS.md.
+
+### Quality & Polish
+
+2. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
+
+3. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
+
+4. **SECURITY.md threat model** — Could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses) beyond the Docker hardening already documented.
+
+5. **BACKLOG.md status sync** — Many backlog items still show "planned" when the work has been done by the overnight iterations (e.g., F8.1 research agent tasks, F8.2 discovery workflow, F9.5 daily briefing workflow).
 
 ## Known Issues
 
