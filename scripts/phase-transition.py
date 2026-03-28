@@ -145,33 +145,37 @@ def evaluate_l1_gate(vault):
 
     # 1. direction-selected
     d = direction.get("direction")
-    target_market = direction.get("targetMarket")
-    passed = d is not None and target_market is not None
+    has_market = False
+    market_val = None
+    if isinstance(d, dict):
+        market_val = d.get("market") or d.get("targetCustomer")
+        has_market = market_val is not None
+    passed = d is not None and has_market
     results.append({
         "id": "direction-selected",
         "description": "Business direction documented with target market",
         "status": "PASS" if passed else "FAIL",
-        "target": "direction and targetMarket non-null",
-        "actual": f"direction={d!r}, targetMarket={target_market!r}"
+        "target": "direction non-null with market/targetCustomer defined",
+        "actual": f"direction={'set' if d else 'null'}, market={market_val!r}"
     })
 
     # 2. brand-brief-complete
     brand_name = brand.get("brandName")
     positioning = brand.get("positioning")
-    tone = brand.get("tone")
-    passed = bool(brand_name and positioning and tone)
+    voice = brand.get("voice") or brand.get("tone")
+    passed = bool(brand_name and positioning and voice)
     results.append({
         "id": "brand-brief-complete",
-        "description": "Brand brief with name, positioning, and tone defined",
+        "description": "Brand brief with name, positioning, and voice defined",
         "status": "PASS" if passed else "FAIL",
-        "target": "brandName, positioning, tone all non-null",
-        "actual": f"brandName={brand_name!r}, positioning={positioning!r}, tone={tone!r}"
+        "target": "brandName, positioning, voice all non-null",
+        "actual": f"brandName={brand_name!r}, positioning={positioning!r}, voice={voice!r}"
     })
 
     # 3. market-research-done
     report_count = 0
     if research_dir.is_dir():
-        report_count = len([f for f in research_dir.iterdir() if f.is_file()])
+        report_count = len([f for f in research_dir.iterdir() if f.is_file() and f.suffix == ".json"])
     passed = report_count >= 1
     results.append({
         "id": "market-research-done",

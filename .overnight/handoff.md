@@ -2,9 +2,9 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 7
+- Iteration: 8
 - Status: CONTINUE
-- Timestamp: 2026-03-28T10:15:00Z
+- Timestamp: 2026-03-28T11:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
@@ -114,6 +114,7 @@ smoke/4-research-agent.test.sh — Smoke test: research agent workspace & integr
 smoke/5-workflow-definitions.test.sh — Smoke test: workflow pipeline definitions (74 checks)
 smoke/6-business-templates.test.sh — Smoke test: business templates & apply-template script (122 checks)
 smoke/7-channel-configuration.test.sh — Smoke test: channel configuration manager (61 checks)
+smoke/8-lifecycle-integration.test.sh — Smoke test: end-to-end lifecycle integration (52 checks)
 templates/content-agency/      — Content & Marketing Agency template (Inkwell Studio)
 templates/saas-micro/          — Micro-SaaS Product template (Shiplog)
 templates/consulting/          — AI Operations Consulting template (Practical AI Partners)
@@ -260,17 +261,15 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 
 1. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out in the orchestrator AGENTS.md.
 
-2. **End-to-end integration test** — A full lifecycle test: simulate onboarding → transition L0→L1 → apply template → transition L1→L2 → verify dashboard shows L2 state. Would prove the whole progression system works as a pipeline.
-
-3. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist. README could use a quickstart walkthrough.
+2. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist. README could use a quickstart walkthrough.
 
 ### Quality & Polish
 
-4. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
+3. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
 
-5. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
+4. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
-6. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
+5. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
 
 ### Iteration 7
 - Built **Channel Configuration Manager** — enables/disables Discord and Telegram channels in the gateway config
@@ -287,6 +286,26 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - Updated `tests/validate-structure.sh`: added channel script existence checks
 - Smoke test: `smoke/7-channel-configuration.test.sh` — 61 checks across 13 phases (script structure, status modes, enable/disable operations, idempotency, token detection, error handling, config integrity, gateway coherence)
 - All 11 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61)
+
+### Iteration 8
+- Built **End-to-End Lifecycle Integration Test** — proves the entire progression pipeline works as a connected system
+- Created `smoke/8-lifecycle-integration.test.sh` — 52 checks across 13 phases:
+  - Phase 1-2: Initialize fresh vault, verify L0 gate rejects empty state
+  - Phase 3-4: Simulate complete onboarding, verify L0 gate passes (6/6 criteria)
+  - Phase 5: Execute L0→L1 transition, verify state update and history logging
+  - Phase 6: Verify L1 gate fails without business data (0/3 criteria)
+  - Phase 7: Apply content-agency template, verify all L1 data populated
+  - Phase 8: Verify L1 gate passes (3/3 criteria)
+  - Phase 9: Execute L1→L2 transition, verify state and history
+  - Phase 10-11: Status shows full journey, dashboard renders L2/Presence state
+  - Phase 12: Vault state consistency — ordered history, all data survives transitions
+  - Phase 13: Reset capabilities — template and onboarding resets work cleanly
+- **Bug fix discovered and resolved**: L1 gate evaluator field mismatches with template data:
+  - `direction.get("targetMarket")` → now checks `direction.direction.market` or `direction.direction.targetCustomer` (nested dict)
+  - `brand.get("tone")` → now checks `brand.get("voice")` with `tone` fallback
+  - Research report counter now filters to `.json` files only (excludes `.gitkeep`)
+- This integration test exercises the full chain: simulate-onboarding.py → phase-transition.py → apply-template.py → phase-transition.py → generate-dashboard.py
+- All 12 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61, lifecycle integration smoke: 52/52)
 
 ## Known Issues
 
