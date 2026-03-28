@@ -1,0 +1,67 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ['bug', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill out the sections below so we can reproduce and fix it.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of AgentOrg are you running? (check `VERSION` file)
+      placeholder: '0.3.0'
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly and concisely.
+      placeholder: 'When I run setup.sh, the gateway fails to start with error...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps to reproduce the issue.
+      placeholder: |
+        1. Clone the repo
+        2. Run ./scripts/setup.sh
+        3. Check docker logs
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include your OS, Docker version, and any relevant config.
+      placeholder: |
+        - OS: Ubuntu 24.04
+        - Docker: 27.x
+        - Docker Compose: v2.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste any error output or logs. These will be formatted as code.
+      render: shell
+    validations:
+      required: false

@@ -1,0 +1,40 @@
+agents:
+  - changed-files:
+      - any-glob-to-any-file: 'agents/**'
+
+skills:
+  - changed-files:
+      - any-glob-to-any-file: 'skills/**'
+
+config:
+  - changed-files:
+      - any-glob-to-any-file: 'config/**'
+
+infra:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docker-compose.yml'
+          - 'scripts/**'
+          - '.github/**'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: 'tests/**'
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.md'
+          - 'dashboards/**'
+
+workflows:
+  - changed-files:
+      - any-glob-to-any-file: 'workflows/**'
+
+knowledge:
+  - changed-files:
+      - any-glob-to-any-file: 'knowledge/**'
+
+templates:
+  - changed-files:
+      - any-glob-to-any-file: 'templates/**'

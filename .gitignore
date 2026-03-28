@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Runtime state (Docker volumes)
+runtime/
+
+# Backups (generated locally)
+backups/
+*.tar.gz
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~

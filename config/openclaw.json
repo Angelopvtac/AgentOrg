@@ -1,0 +1,179 @@
+// AgentOrg — OpenClaw Gateway Configuration
+// JSON5 format — comments allowed
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        // Tier 1 (Triage) as default — agents escalate when needed
+        "primary": "openrouter/anthropic/claude-haiku-4.5",
+        "fallbacks": [
+          "openrouter/google/gemini-2.0-flash-001"
+        ]
+      },
+      "models": {
+        "openrouter/anthropic/claude-haiku-4.5": { "alias": "Tier1-Triage" },
+        "openrouter/anthropic/claude-sonnet-4.6": { "alias": "Tier2-Execution" },
+        "openrouter/anthropic/claude-opus-4.6": { "alias": "Tier3-Strategic" }
+      },
+      "workspace": "/home/node/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokensFloor": 40000,
+        "memoryFlush": {
+          "enabled": true
+        }
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 2,
+        "maxSpawnDepth": 2,
+        "maxChildrenPerAgent": 2,
+        "archiveAfterMinutes": 30,
+        "model": "openrouter/anthropic/claude-haiku-4.5"
+      }
+    },
+    "list": [
+      {
+        "id": "orchestrator",
+        "name": "Orchestrator",
+        "default": true,
+        "workspace": "/home/node/.openclaw/workspace-orchestrator",
+        "agentDir": "/home/node/.openclaw/agents/orchestrator/agent",
+        "model": {
+          // Tier 1 for routing, escalates to Tier 3 for decisions
+          "primary": "openrouter/anthropic/claude-haiku-4.5",
+          "fallbacks": [
+            "openrouter/google/gemini-2.0-flash-001"
+          ]
+        },
+        "heartbeat": {
+          "every": "60m"
+        },
+        "identity": {
+          "name": "Orchestrator"
+        }
+      },
+      {
+        "id": "core-assistant",
+        "name": "Core Assistant",
+        "workspace": "/home/node/.openclaw/workspace-core-assistant",
+        "agentDir": "/home/node/.openclaw/agents/core-assistant/agent",
+        "model": {
+          // Tier 2 for conversations
+          "primary": "openrouter/anthropic/claude-sonnet-4.6",
+          "fallbacks": [
+            "openrouter/anthropic/claude-haiku-4.5"
+          ]
+        },
+        "heartbeat": {
+          "every": "1440m"
+        },
+        "identity": {
+          "name": "Core Assistant"
+        }
+      }
+    ]
+  },
+
+  "session": {
+    "dmScope": "per-peer"
+    // dailyReset deferred — not a recognized OpenClaw key yet
+  },
+
+  "tools": {
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "perplexity",
+        "maxResults": 5
+      },
+      "fetch": {
+        "enabled": true,
+        "maxChars": 10000
+      }
+    },
+    "sessions": {
+      // "all" = every agent can see every other agent's sessions.
+      // Acceptable at L0-L2 (only orchestrator + core-assistant exist).
+      // Tighten to per-agent ACLs when adding untrusted or third-party agents.
+      "visibility": "all"
+    },
+    "agentToAgent": {
+      "enabled": true,
+      "allow": [
+        "orchestrator",
+        "core-assistant"
+      ]
+    }
+  },
+
+  // --- Channel Templates (uncomment and configure during channel setup) ---
+  // "channels": {
+  //   "discord": {
+  //     "enabled": true,
+  //     "groupPolicy": "allowlist",
+  //     "accounts": {
+  //       "agentorg": {
+  //         "token": "${DISCORD_BOT_TOKEN}",
+  //         "groupPolicy": "allowlist",
+  //         "guilds": {},
+  //         "activity": "AgentOrg",
+  //         "status": "online"
+  //       }
+  //     }
+  //   },
+  //   "telegram": {
+  //     "enabled": true,
+  //     "accounts": {
+  //       "agentorg": {
+  //         "token": "${TELEGRAM_BOT_TOKEN}",
+  //         "dmPolicy": "pairing"
+  //       }
+  //     }
+  //   }
+  // },
+
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto"
+  },
+
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "boot-md": {
+          "enabled": true
+        },
+        "session-memory": {
+          "enabled": true
+        }
+      }
+    }
+  },
+
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "lan",
+    "controlUi": {
+      // Auth enforced — gateway token required for UI access.
+      // Ports bound to 127.0.0.1 in docker-compose.yml; never expose externally.
+      "allowInsecureAuth": false
+    },
+    "auth": {
+      "mode": "token"
+      // token loaded from OPENCLAW_GATEWAY_TOKEN env var
+    }
+  },
+
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    }
+  }
+}

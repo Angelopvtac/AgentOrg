@@ -1,0 +1,45 @@
+{
+  "status": "not-started",
+  "startedAt": null,
+  "completedAt": null,
+  "lastUpdated": null,
+  "sections": {
+    "welcome": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "personal": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "skills": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "availability": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "financial": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "goals": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "preferences": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "vision": {
+      "status": "pending",
+      "completedAt": null
+    },
+    "review": {
+      "status": "pending",
+      "completedAt": null
+    }
+  },
+  "currentSection": null
+}

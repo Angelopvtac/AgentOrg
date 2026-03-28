@@ -1,0 +1,202 @@
+{
+  "phases": {
+    "L0": {
+      "name": "Onboarding",
+      "description": "Initial setup — founder completes profile, defines vision, system is configured.",
+      "agents": ["orchestrator", "core-assistant"],
+      "gate": {
+        "criteria": [
+          {
+            "id": "profile-complete",
+            "description": "Founder profile has all required fields populated",
+            "check": "vault/founder-profile.json: personalInfo.name, personalInfo.timezone, personalInfo.communicationStyle are non-null"
+          },
+          {
+            "id": "skills-identified",
+            "description": "At least 3 founder skills/interests documented",
+            "check": "vault/founder-profile.json: skills array has length >= 3"
+          },
+          {
+            "id": "availability-set",
+            "description": "Weekly hours and quiet hours are defined",
+            "check": "vault/founder-profile.json: availability.weeklyHours > 0 and availability.quietHours is non-null"
+          },
+          {
+            "id": "financial-baseline",
+            "description": "Daily budget confirmed and risk tolerance set",
+            "check": "vault/economics/daily-budget.json: dailyLimit > 0 AND vault/founder-profile.json: financial.riskTolerance is non-null"
+          },
+          {
+            "id": "vision-defined",
+            "description": "Vision statement exists with at least 2 sentences",
+            "check": "vault/founder-profile.json: vision.statement is non-null and length > 50 characters"
+          },
+          {
+            "id": "onboarding-complete",
+            "description": "All 9 onboarding sections marked complete",
+            "check": "vault/onboarding-state.json: status == 'complete'"
+          }
+        ],
+        "evaluation": "All 6 criteria must pass. Orchestrator evaluates at Tier 3 daily and on core-assistant notification."
+      },
+      "transition": {
+        "target": "L1",
+        "actions": [
+          "Update vault/phase-state.json to L1",
+          "Notify founder via core-assistant",
+          "Log transition in vault/phase-state.json history"
+        ]
+      }
+    },
+    "L1": {
+      "name": "Discovery",
+      "description": "Founder explores direction — market research, niche selection, brand brief creation.",
+      "agents": ["orchestrator", "core-assistant", "research"],
+      "gate": {
+        "criteria": [
+          {
+            "id": "direction-selected",
+            "description": "Business direction documented with target market",
+            "check": "vault/business/direction.json exists and has non-null fields"
+          },
+          {
+            "id": "brand-brief-complete",
+            "description": "Brand brief with name, positioning, and tone defined",
+            "check": "vault/business/brand-brief.json exists with required fields"
+          },
+          {
+            "id": "market-research-done",
+            "description": "At least one market research report generated",
+            "check": "vault/research/ contains at least one report file"
+          }
+        ],
+        "evaluation": "All criteria must pass. Evaluated at Tier 3."
+      },
+      "transition": {
+        "target": "L2",
+        "actions": [
+          "Update vault/phase-state.json to L2",
+          "Unlock content and social agents",
+          "Notify founder"
+        ]
+      }
+    },
+    "L2": {
+      "name": "Presence",
+      "description": "Build online presence — content creation, social accounts, audience growth.",
+      "agents": ["orchestrator", "core-assistant", "research", "content", "social"],
+      "gate": {
+        "criteria": [
+          {
+            "id": "follower-count",
+            "description": "At least 100 followers across active platforms",
+            "check": "vault/metrics/social.json: totalFollowers >= 100"
+          },
+          {
+            "id": "engagement-rate",
+            "description": "5% or higher engagement rate sustained for 7 days",
+            "check": "vault/metrics/social.json: engagementRate >= 0.05 for 7 consecutive days"
+          }
+        ],
+        "evaluation": "All criteria must pass. Evaluated at Tier 3."
+      },
+      "transition": {
+        "target": "L3",
+        "actions": [
+          "Update vault/phase-state.json to L3",
+          "Unlock sales and compliance agents",
+          "Notify founder"
+        ]
+      }
+    },
+    "L3": {
+      "name": "First Revenue",
+      "description": "Monetization — first sale, payment processing, customer delivery.",
+      "agents": ["orchestrator", "core-assistant", "research", "content", "social", "sales", "compliance"],
+      "gate": {
+        "criteria": [
+          {
+            "id": "first-revenue",
+            "description": "At least $1 in revenue recorded",
+            "check": "vault/economics/revenue.json: totalRevenue >= 1.00"
+          },
+          {
+            "id": "paying-customer",
+            "description": "At least 1 verified paying customer",
+            "check": "vault/economics/revenue.json: count distinct entries[].customerId >= 1"
+          }
+        ],
+        "evaluation": "All criteria must pass. Evaluated at Tier 3."
+      },
+      "transition": {
+        "target": "L4",
+        "actions": [
+          "Update vault/phase-state.json to L4",
+          "Unlock finance, operations, and audit agents",
+          "Notify founder"
+        ]
+      }
+    },
+    "L4": {
+      "name": "Product-Market Fit",
+      "description": "Validate fit — revenue growth, retention, unit economics.",
+      "agents": ["orchestrator", "core-assistant", "research", "content", "social", "sales", "compliance", "finance", "operations", "audit"],
+      "gate": {
+        "criteria": [
+          {
+            "id": "revenue-ratio",
+            "description": "Revenue at least 3x operational costs",
+            "check": "vault/economics/treasury.json: revenueToExpenseRatio >= 3.0"
+          },
+          {
+            "id": "repeat-rate",
+            "description": "15% or higher repeat customer rate",
+            "check": "vault/economics/revenue.json: calculate repeat customerId rate >= 0.15"
+          }
+        ],
+        "evaluation": "All criteria must pass. Evaluated at Tier 3."
+      },
+      "transition": {
+        "target": "L5",
+        "actions": [
+          "Update vault/phase-state.json to L5",
+          "Unlock strategy agent",
+          "Notify founder"
+        ]
+      }
+    },
+    "L5": {
+      "name": "Scale Decision",
+      "description": "Strategic scaling — growth plan, resource allocation, expansion decisions.",
+      "agents": ["orchestrator", "core-assistant", "research", "content", "social", "sales", "compliance", "finance", "operations", "audit", "strategy"],
+      "gate": {
+        "criteria": [
+          {
+            "id": "scaling-proposal",
+            "description": "Scaling proposal created and approved by founder",
+            "check": "vault/strategy/scaling-proposal.json: status == 'approved'"
+          }
+        ],
+        "evaluation": "Founder approval required. Evaluated at Tier 3."
+      },
+      "transition": {
+        "target": "L6",
+        "actions": [
+          "Update vault/phase-state.json to L6",
+          "All agents active — full autonomy",
+          "Notify founder"
+        ]
+      }
+    },
+    "L6": {
+      "name": "Autonomous Operations",
+      "description": "Full autonomy — continuous monitoring, self-optimization, minimal founder intervention.",
+      "agents": ["orchestrator", "core-assistant", "research", "content", "social", "sales", "compliance", "finance", "operations", "audit", "strategy"],
+      "gate": {
+        "criteria": [],
+        "evaluation": "Terminal phase. Continuous health monitoring. Regression triggers review."
+      },
+      "transition": null
+    }
+  }
+}

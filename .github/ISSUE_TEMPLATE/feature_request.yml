@@ -1,0 +1,49 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ['enhancement', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature. Please describe the use case clearly — we prioritize features that solve real problems.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the problem or limitation you're experiencing.
+      placeholder: 'I need agents to be able to...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe how you'd like this to work. Be as specific as possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you tried any workarounds? What other approaches did you consider?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of AgentOrg does this affect?
+      options:
+        - Agents
+        - Skills
+        - Workflows / Pipelines
+        - Configuration
+        - Scripts / Tooling
+        - Documentation
+        - Other
+    validations:
+      required: true

@@ -1,0 +1,40 @@
+{
+  "personalInfo": {
+    "name": null,
+    "timezone": null,
+    "location": null,
+    "communicationStyle": null,
+    "language": "en"
+  },
+  "skills": [],
+  "availability": {
+    "weeklyHours": null,
+    "preferredDays": [],
+    "quietHours": null,
+    "responseExpectation": null
+  },
+  "financial": {
+    "dailyBudget": null,
+    "riskTolerance": null,
+    "investmentCapacity": null,
+    "revenueGoal": null
+  },
+  "goals": {
+    "primary": null,
+    "timeline": null,
+    "successMetric": null,
+    "interests": []
+  },
+  "preferences": {
+    "decisionStyle": null,
+    "updateFrequency": null,
+    "notificationChannels": [],
+    "emojiUse": false
+  },
+  "vision": {
+    "statement": null,
+    "values": [],
+    "constraints": [],
+    "iterationCount": 0
+  }
+}

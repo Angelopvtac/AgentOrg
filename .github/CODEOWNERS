@@ -1,0 +1,9 @@
+# Default owner for everything
+* @h4kmv
+
+# Security-critical files require explicit review
+docker-compose.yml @h4kmv
+config/ @h4kmv
+.github/ @h4kmv
+scripts/ @h4kmv
+.env.example @h4kmv

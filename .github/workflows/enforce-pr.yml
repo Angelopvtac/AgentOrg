@@ -1,0 +1,66 @@
+name: PR Quality Gates
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  size-check:
+    name: PR Size Warning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ADDITIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{s+=$1} END {print s+0}')
+          DELETIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{s+=$2} END {print s+0}')
+          TOTAL=$((ADDITIONS + DELETIONS))
+
+          echo "Changes: +${ADDITIONS} -${DELETIONS} (${TOTAL} total)"
+
+          if [ "$TOTAL" -gt 1000 ]; then
+            echo "::warning::Large PR (${TOTAL} lines changed). Consider breaking into smaller PRs for easier review."
+          elif [ "$TOTAL" -gt 500 ]; then
+            echo "::notice::Medium PR (${TOTAL} lines changed). Still reviewable, but smaller is better."
+          fi
+
+  description-check:
+    name: PR Description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR has description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if [ -z "$PR_BODY" ] || [ ${#PR_BODY} -lt 20 ]; then
+            echo "::error::PR description is missing or too short. Please describe what this PR does and why."
+            exit 1
+          fi
+          echo "PR description looks good"
+
+  file-guard:
+    name: Protected File Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes to protected files
+        run: |
+          PROTECTED_FILES=".env LICENSE"
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          for file in $PROTECTED_FILES; do
+            if echo "$CHANGED" | grep -q "^${file}$"; then
+              echo "::warning::Protected file modified: ${file} — this will require maintainer approval"
+            fi
+          done

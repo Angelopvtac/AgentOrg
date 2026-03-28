@@ -1,0 +1,17 @@
+{
+  "dailyLimit": 5.00,
+  "currency": "USD",
+  "currentDate": null,
+  "spent": 0.00,
+  "breakdown": {
+    "tier1": 0.00,
+    "tier2": 0.00,
+    "tier3": 0.00
+  },
+  "alerts": {
+    "warnAt": 0.80,
+    "pauseAt": 1.00,
+    "killSwitchAt": 2.00
+  },
+  "history": []
+}

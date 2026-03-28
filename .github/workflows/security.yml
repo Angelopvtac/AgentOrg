@@ -1,0 +1,94 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday 6am UTC
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  env-guard:
+    name: Environment File Guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for committed secrets
+        run: |
+          VIOLATIONS=0
+
+          # Check for .env files (should never be committed)
+          if find . -name '.env' -not -path './.git/*' -not -name '.env.example' | grep -q .; then
+            echo "::error::Found .env file(s) that should not be committed"
+            find . -name '.env' -not -path './.git/*' -not -name '.env.example'
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          # Check for hardcoded API keys in config files
+          if grep -rn 'sk-[a-zA-Z0-9]\{20,\}' --include='*.json' --include='*.json5' --include='*.yml' --include='*.yaml' . 2>/dev/null | grep -v '.git/' | grep -q .; then
+            echo "::error::Possible hardcoded API key detected"
+            grep -rn 'sk-[a-zA-Z0-9]\{20,\}' --include='*.json' --include='*.json5' --include='*.yml' --include='*.yaml' . 2>/dev/null | grep -v '.git/'
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          # Check for private keys
+          if grep -rn 'PRIVATE KEY' --include='*.json' --include='*.yml' --include='*.sh' . 2>/dev/null | grep -v '.git/' | grep -q .; then
+            echo "::error::Possible private key detected"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            exit 1
+          fi
+
+          echo "No secrets detected"
+
+  docker-security:
+    name: Docker Security
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Docker Compose hardening
+        run: |
+          # Verify security-critical settings haven't been removed
+          CONFIG="docker-compose.yml"
+
+          check_setting() {
+            if ! grep -q "$1" "$CONFIG"; then
+              echo "::error::Missing security setting: $1"
+              return 1
+            fi
+          }
+
+          FAILED=0
+          check_setting "no-new-privileges" || FAILED=1
+          check_setting "cap_drop" || FAILED=1
+          check_setting "read_only" || FAILED=1
+          check_setting "127.0.0.1" || FAILED=1
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo "::error::Docker Compose security hardening has been weakened"
+            exit 1
+          fi
+
+          echo "Docker security settings intact"
