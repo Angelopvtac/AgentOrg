@@ -32,7 +32,7 @@ echo "  Docker Compose: $(docker compose version --short)"
 
 if ! docker image inspect openclaw:local &>/dev/null; then
     echo "  ERROR: Docker image 'openclaw:local' not found."
-    echo "  Build it first: cd /home/angelo/openclaw-workspace/openclaw-src && docker build -t openclaw:local ."
+    echo "  Build it first: cd /path/to/openclaw-src && docker build -t openclaw:local ."
     exit 1
 fi
 echo "  Image openclaw:local: found"
