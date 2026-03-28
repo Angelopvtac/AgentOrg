@@ -21,3 +21,8 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Overnight runner
+.overnight/
+overnight-log.md
+.overnight-stop
