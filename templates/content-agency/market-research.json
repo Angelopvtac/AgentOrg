@@ -1,0 +1,38 @@
+{
+  "reportType": "market-scan",
+  "title": "Content Agency Market Scan — AI-Augmented Services for SMBs",
+  "generatedAt": null,
+  "phase": "L1",
+  "findings": [
+    {
+      "category": "market-size",
+      "finding": "The global content marketing industry is valued at $600B+ with SMB segment growing at 14% annually. AI-augmented agencies are a nascent but rapidly growing subsegment.",
+      "confidence": "high",
+      "sources": ["Content Marketing Institute 2025 Report", "Statista Digital Market Outlook"]
+    },
+    {
+      "category": "competition",
+      "finding": "Direct competitors include Verblio, nDash, and ClearVoice. Most position as marketplaces connecting businesses to freelancers. Few offer the AI-augmented hybrid model.",
+      "confidence": "high",
+      "sources": ["G2 content agency comparison", "competitor website analysis"]
+    },
+    {
+      "category": "pricing",
+      "finding": "Retainer packages range from $500/mo for basic blog content to $5000/mo for full-service content strategy. AI-augmented agencies price 20-40% below traditional agencies.",
+      "confidence": "medium",
+      "sources": ["competitor pricing pages", "freelancer rate surveys"]
+    },
+    {
+      "category": "opportunity",
+      "finding": "The gap between enterprise content teams and solo freelancers is underserved. Small businesses want agency-quality output at freelancer prices — AI augmentation makes this viable.",
+      "confidence": "high",
+      "sources": ["founder interviews", "Reddit r/Entrepreneur sentiment analysis"]
+    }
+  ],
+  "recommendations": [
+    "Start with a $750/mo starter package (4 blog posts + social repurposing) to validate demand",
+    "Target B2B SaaS companies in the 5-50 employee range via LinkedIn outreach",
+    "Differentiate on turnaround speed (48-hour drafts) enabled by AI-first workflow",
+    "Build a portfolio of 3-5 case studies within first month using discounted pilot clients"
+  ]
+}

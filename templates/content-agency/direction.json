@@ -1,0 +1,30 @@
+{
+  "collection": "business-direction",
+  "description": "Selected business direction from L1 discovery phase",
+  "direction": {
+    "type": "content-agency",
+    "name": "Content & Marketing Agency",
+    "market": "Small businesses and early-stage startups needing consistent content but lacking in-house writers",
+    "positioning": "AI-augmented content agency — faster turnaround, data-driven topic selection, human-quality output at freelancer prices",
+    "revenueModel": "Monthly retainer packages ($500-$2000/mo) with add-on services for campaigns",
+    "differentiator": "Combines AI content generation with human editorial oversight to deliver 3x the output of a solo freelancer",
+    "targetCustomer": "B2B SaaS founders and marketing managers at companies with 5-50 employees",
+    "channels": ["LinkedIn outreach", "cold email", "content marketing (meta)", "referrals"],
+    "risks": [
+      "Race to bottom on pricing as AI tools commoditize content",
+      "Client retention depends on measurable results, not just output volume",
+      "Reputation risk if AI-generated content is detected and perceived negatively"
+    ]
+  },
+  "selectedAt": null,
+  "alternatives": [
+    {
+      "name": "Niche Newsletter Business",
+      "reason_rejected": "Slower revenue ramp — requires audience building before monetization"
+    },
+    {
+      "name": "Technical Documentation Service",
+      "reason_rejected": "Smaller addressable market, higher skill barrier"
+    }
+  ]
+}

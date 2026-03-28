@@ -2,9 +2,9 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 5
+- Iteration: 6
 - Status: CONTINUE
-- Timestamp: 2026-03-28T09:00:00Z
+- Timestamp: 2026-03-28T09:30:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
@@ -28,6 +28,7 @@ This is NOT a web app with routes. It's an OpenClaw gateway with:
 - **Onboarding Simulator**: Python script that populates vault with realistic onboarding data and evaluates L0 gate criteria programmatically
 - **Phase Transition Engine**: Python script that evaluates gate criteria for the current phase and transitions to the next phase when all criteria pass, with backup, state persistence, and history tracking
 - **Workflow Pipelines**: Lobster pipeline definitions in `workflows/` that codify multi-step agent workflows with triggers, steps, data flow, and success criteria
+- **Business Templates**: 3 starter templates (content-agency, saas-micro, consulting) in `templates/` with apply script to pre-seed L1 discovery data
 
 ### Data Models
 All data is JSON files in `knowledge/` (vault):
@@ -74,6 +75,7 @@ All data is JSON files in `knowledge/` (vault):
 8. **Daily briefing flow** (designed with full workflow definition): Cron triggers per `workflows/daily-briefing.lobster` → orchestrator gathers phase/budget/tasks/knowledge data from vault → compiles briefing → sends to core-assistant → core-assistant formats for founder's communication style → delivers respecting quiet hours → updates briefing-state.json
 9. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
 10. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
+11. **Template application flow**: `bash scripts/apply-template.sh --list` shows 3 templates → `--preview <id>` shows details → `--apply <id>` writes direction.json, brand-brief.json, and market research report to vault with timestamps → reports L1 gate progress → `--reset` clears L1 data back to empty state
 
 ## File Map
 ```
@@ -108,6 +110,16 @@ smoke/2-onboarding-simulation.test.sh — Smoke test: onboarding simulation & ga
 smoke/3-phase-transition.test.sh — Smoke test: phase transition engine (39 checks)
 smoke/4-research-agent.test.sh — Smoke test: research agent workspace & integration (49 checks)
 smoke/5-workflow-definitions.test.sh — Smoke test: workflow pipeline definitions (74 checks)
+smoke/6-business-templates.test.sh — Smoke test: business templates & apply-template script (122 checks)
+templates/content-agency/      — Content & Marketing Agency template (Inkwell Studio)
+templates/saas-micro/          — Micro-SaaS Product template (Shiplog)
+templates/consulting/          — AI Operations Consulting template (Practical AI Partners)
+templates/*/template.json      — Template manifest (id, name, description, suggestedSkills, files)
+templates/*/direction.json     — Pre-seeded business direction with market, revenue model, risks, alternatives
+templates/*/brand-brief.json   — Pre-seeded brand brief with name, tagline, voice, audience, visual identity
+templates/*/market-research.json — Pre-seeded market research report with findings, confidence, sources, recommendations
+scripts/apply-template.sh      — Template application (bash wrapper → calls apply-template.py)
+scripts/apply-template.py      — Python script: list, preview, apply, reset business-type templates
 tests/run-all.sh               — Test runner (4 validation suites + smoke tests)
 tests/validate-*.sh            — Individual validation scripts
 docker-compose.yml             — Single gateway container with volume mounts for 3 agents, security hardening
@@ -130,6 +142,7 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - **Research ↔ Vault**: Research agent reads `vault/founder-profile.json` for context, writes structured JSON reports to `vault/research/`, updates `vault/business/direction.json` with selected direction data. Reports follow a defined schema with findings, confidence levels, sources, and recommendations.
 - **Daily Briefing Pipeline** (`workflows/daily-briefing.lobster`): Cron trigger → 8 steps: gather phase status, budget, tasks, knowledge, phase-specific context → compile → deliver to core-assistant → update briefing-state.json. Handles all phases (L0-L6) with phase-specific context blocks.
 - **Discovery Pipeline** (`workflows/discovery.lobster`): Event trigger (L1 transition) → 7 steps: profile ingestion → market scan → founder direction selection → competitive deep-dive → brand brief research → brand brief completion → L1 gate verification. Tracks gate progress (3 criteria) through vault file state. Supports pipeline resumption after interruption.
+- **Templates ↔ Vault**: `scripts/apply-template.py` reads template files from `templates/<id>/` → writes direction.json, brand-brief.json to `vault/business/`, market research to `vault/research/` with timestamps. Templates satisfy all 3 L1 gate criteria (direction-selected, brand-brief-complete, market-research-done), enabling fast-track through L1 Discovery phase. Reset mode restores vault to empty L1 state.
 
 ## Iteration Log
 ### Iteration 0
@@ -217,30 +230,45 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - Smoke test: `smoke/5-workflow-definitions.test.sh` — 74 checks across 10 phases (file existence, daily briefing structure, vault references, agent assignments, discovery structure, L1 gate criteria coverage, agent assignments, report format, agent integration, progression coherence)
 - All 9 test suites pass (structure: 64/64, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74)
 
+### Iteration 6
+- Built **Business Type Templates** — 3 starter templates to accelerate L1 Discovery phase
+- Created 3 template directories (`templates/content-agency/`, `templates/saas-micro/`, `templates/consulting/`) each with:
+  - `template.json` — manifest with id, name, description, suggestedSkills, suggestedGoal, file list
+  - `direction.json` — pre-seeded business direction with market, positioning, revenue model, differentiator, target customer, channels, risks, and rejected alternatives
+  - `brand-brief.json` — brand brief with name, tagline, voice, audience, positioning, visual identity
+  - `market-research.json` — market scan report with categorized findings (market-size, competition, pricing, opportunity), confidence ratings, sources, and recommendations
+- Template brands: Inkwell Studio (content agency), Shiplog (micro-SaaS), Practical AI Partners (consulting)
+- Created `scripts/apply-template.py` — Python script with 4 modes:
+  - `--list`: Lists all available templates with names and descriptions
+  - `--preview <id>`: Shows detailed template info (direction summary, brand, skills, files)
+  - `--apply <id> [vault]`: Writes template data to vault with timestamps, reports L1 gate progress (all 3 criteria: direction-selected, brand-brief-complete, market-research-done)
+  - `--reset [vault]`: Clears L1 business data back to empty state (direction, brand brief, research reports)
+- Created `scripts/apply-template.sh` — bash wrapper matching existing script patterns
+- Updated `tests/validate-structure.sh`: added template file existence checks (3 templates × 4 files + 2 scripts)
+- Smoke test: `smoke/6-business-templates.test.sh` — 122 checks across 13 phases (template structure, manifests, direction files, brand briefs, research reports, script structure, list/preview/apply/reset modes, error handling, progression coherence)
+- All 10 test suites pass (structure: 78/78, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122)
+
 ## Remaining Opportunities (ranked)
 
 ### Feature Completeness (V1 Critical Path)
 
 1. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
 
-2. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
+2. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
 
-3. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
-
-4. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
+3. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
 
 ### Quality & Polish
 
-5. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
+4. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
 
-6. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
+5. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
-7. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
+6. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
 
 ## Known Issues
 
-1. **No templates** — `templates/` directory is empty. Business-type templates not created.
-2. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
-3. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
-4. **shellcheck not installed** — Test suite skips shell linting.
-5. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.
+1. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
+2. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
+3. **shellcheck not installed** — Test suite skips shell linting.
+4. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.

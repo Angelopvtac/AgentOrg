@@ -1,0 +1,38 @@
+{
+  "reportType": "market-scan",
+  "title": "Consulting Market Scan — AI Operations Consulting for Mid-Market Companies",
+  "generatedAt": null,
+  "phase": "L1",
+  "findings": [
+    {
+      "category": "market-size",
+      "finding": "The AI consulting market is projected to reach $64B by 2028. Mid-market segment is underserved — most AI consultancies target enterprise ($1B+ revenue) or startups.",
+      "confidence": "high",
+      "sources": ["McKinsey AI Adoption Survey 2025", "IDC AI Services Forecast"]
+    },
+    {
+      "category": "competition",
+      "finding": "Big 4 firms dominate enterprise AI consulting. Boutique firms and fractional CTOs serve the SMB end. The 50-500 employee segment has few dedicated providers offering hands-on implementation.",
+      "confidence": "high",
+      "sources": ["Clutch.co AI consulting directory", "LinkedIn competitor analysis"]
+    },
+    {
+      "category": "pricing",
+      "finding": "Boutique AI consultants charge $150-$350/hr. Project-based engagements range from $5K for assessments to $100K+ for full implementations. Mid-market buyers prefer fixed-price projects over hourly.",
+      "confidence": "medium",
+      "sources": ["consultant rate surveys", "RFP benchmark data"]
+    },
+    {
+      "category": "opportunity",
+      "finding": "70% of mid-market companies report failed or stalled AI initiatives. The primary failure mode is strategy-without-execution. A consultant who ships working prototypes within 2-week sprints has a strong value proposition.",
+      "confidence": "high",
+      "sources": ["Deloitte AI adoption survey", "founder interviews"]
+    }
+  ],
+  "recommendations": [
+    "Offer a fixed-price AI Readiness Assessment ($5,000) as a low-friction entry point",
+    "Deliver a working prototype within 2 weeks of every engagement to build trust early",
+    "Publish weekly LinkedIn posts analyzing real AI use cases (anonymized) from engagements",
+    "Target companies that have recently posted AI-related job listings but haven't filled them — they have budget and need"
+  ]
+}

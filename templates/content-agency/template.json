@@ -1,0 +1,19 @@
+{
+  "id": "content-agency",
+  "name": "Content & Marketing Agency",
+  "description": "A lean content creation agency offering writing, social media management, and content strategy services to small businesses and startups.",
+  "targetPhase": "L1",
+  "suggestedSkills": [
+    "copywriting",
+    "social media marketing",
+    "content strategy",
+    "SEO",
+    "client management"
+  ],
+  "suggestedGoal": "Build a content agency that serves 5 recurring clients within 3 months",
+  "files": [
+    "direction.json",
+    "brand-brief.json",
+    "market-research.json"
+  ]
+}

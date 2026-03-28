@@ -1,0 +1,30 @@
+{
+  "collection": "business-direction",
+  "description": "Selected business direction from L1 discovery phase",
+  "direction": {
+    "type": "saas-micro",
+    "name": "Micro-SaaS Product",
+    "market": "Solo developers and small dev teams needing automated changelog generation from git commits and PRs",
+    "positioning": "AI-powered changelog generator that turns messy commit histories into polished, user-facing release notes — deployed in 5 minutes",
+    "revenueModel": "Freemium SaaS — free for public repos, $12/mo per private repo, $49/mo team plan (unlimited repos)",
+    "differentiator": "Integrates directly into CI/CD pipelines (GitHub Actions, GitLab CI) with zero config. Understands commit conventions and PR descriptions to generate human-readable summaries.",
+    "targetCustomer": "Developer tool makers and SaaS companies shipping weekly who want professional changelogs without manual effort",
+    "channels": ["Product Hunt launch", "dev Twitter/X", "GitHub marketplace", "Hacker News"],
+    "risks": [
+      "GitHub may build this natively into their release notes feature",
+      "Low switching cost — users can easily try alternatives",
+      "Must prove value beyond what GPT-4 in a script can do"
+    ]
+  },
+  "selectedAt": null,
+  "alternatives": [
+    {
+      "name": "API Documentation Generator",
+      "reason_rejected": "Crowded space — Mintlify, ReadMe, and Swagger dominate"
+    },
+    {
+      "name": "Code Review Bot",
+      "reason_rejected": "Enterprise sales cycle too long for solo founder"
+    }
+  ]
+}

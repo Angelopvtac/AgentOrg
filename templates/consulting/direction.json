@@ -1,0 +1,30 @@
+{
+  "collection": "business-direction",
+  "description": "Selected business direction from L1 discovery phase",
+  "direction": {
+    "type": "consulting",
+    "name": "AI Operations Consulting",
+    "market": "Mid-market companies (50-500 employees) looking to integrate AI into their operations without hiring a full-time AI team",
+    "positioning": "Fractional AI strategist — helps companies identify, prioritize, and implement AI use cases that actually save time and money, not just demo well",
+    "revenueModel": "Project-based ($5,000-$25,000 per engagement) with optional monthly retainer ($2,000-$5,000/mo) for ongoing optimization",
+    "differentiator": "Hands-on implementation, not just slide decks. Every engagement delivers a working prototype or automated workflow, not a 50-page strategy document.",
+    "targetCustomer": "Operations and engineering leaders at mid-market companies who have budget for AI but don't know where to start or have been burned by vaporware vendors",
+    "channels": ["LinkedIn thought leadership", "conference speaking", "warm referrals", "case study content"],
+    "risks": [
+      "Consulting revenue is linear — trading time for money without leverage",
+      "Client expectations may exceed what's deliverable in short engagements",
+      "Market education needed — many companies think they need AI when they need better processes"
+    ]
+  },
+  "selectedAt": null,
+  "alternatives": [
+    {
+      "name": "Data Analytics Consulting",
+      "reason_rejected": "Highly commoditized — too many competing firms with established reputations"
+    },
+    {
+      "name": "AI Training Workshops",
+      "reason_rejected": "Lower per-engagement revenue, requires course material development upfront"
+    }
+  ]
+}

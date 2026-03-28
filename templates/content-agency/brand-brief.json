@@ -1,0 +1,15 @@
+{
+  "collection": "brand-brief",
+  "description": "Brand identity brief generated after direction selection",
+  "brandName": "Inkwell Studio",
+  "tagline": "Content that compounds",
+  "voice": "Professional but approachable. Data-informed without being dry. Confident without being salesy. Uses concrete examples over abstract claims.",
+  "audience": "B2B SaaS founders and marketing managers who know they need content but don't have time to produce it consistently. They value measurable outcomes over word counts.",
+  "positioning": "The content partner that treats your brand voice as seriously as you do — augmented by AI for speed, guided by humans for substance.",
+  "visualIdentity": {
+    "primaryColor": "#1a1a2e",
+    "accentColor": "#e94560",
+    "typography": "Clean sans-serif (Inter or similar), editorial serif for headlines"
+  },
+  "createdAt": null
+}

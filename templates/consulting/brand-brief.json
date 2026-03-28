@@ -1,0 +1,15 @@
+{
+  "collection": "brand-brief",
+  "description": "Brand identity brief generated after direction selection",
+  "brandName": "Practical AI Partners",
+  "tagline": "AI that works on Monday morning",
+  "voice": "Authoritative but not academic. Plain language over jargon. Skeptical of hype, enthusiastic about results. Uses case studies and numbers to make points.",
+  "audience": "Operations directors, VPs of Engineering, and CTOs at mid-market companies who have budget authority and are tired of AI vendors selling futures. They want someone who's done it before.",
+  "positioning": "The AI consultant who ships. Not another strategy firm — a hands-on partner who builds the first version with your team, then teaches them to maintain it.",
+  "visualIdentity": {
+    "primaryColor": "#1e293b",
+    "accentColor": "#22c55e",
+    "typography": "Professional sans-serif (Inter), clean and readable. No design excess."
+  },
+  "createdAt": null
+}

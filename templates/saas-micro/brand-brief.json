@@ -1,0 +1,15 @@
+{
+  "collection": "brand-brief",
+  "description": "Brand identity brief generated after direction selection",
+  "brandName": "Shiplog",
+  "tagline": "Your commits, their changelog",
+  "voice": "Developer-native. Terse and technical when needed, friendly when explaining. No marketing fluff. Show, don't tell — examples over promises.",
+  "audience": "Developers and engineering leads at SaaS companies (10-200 employees) who ship frequently and want their users to know what changed without writing release notes by hand.",
+  "positioning": "The changelog tool that understands your code. Not another template — actual AI comprehension of what changed and why it matters to users.",
+  "visualIdentity": {
+    "primaryColor": "#0f172a",
+    "accentColor": "#38bdf8",
+    "typography": "Monospace for code contexts (JetBrains Mono), sans-serif for UI (Geist)"
+  },
+  "createdAt": null
+}

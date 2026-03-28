@@ -170,6 +170,35 @@ for f in "${WORKFLOW_FILES[@]}"; do
     fi
 done
 
+# --- Template files ---
+echo ""
+echo "Template files:"
+TEMPLATE_DIRS=(content-agency saas-micro consulting)
+for t in "${TEMPLATE_DIRS[@]}"; do
+    for f in template.json direction.json brand-brief.json market-research.json; do
+        if [ -f "$PROJECT_DIR/templates/$t/$f" ]; then
+            pass "templates/$t/$f"
+        else
+            fail "templates/$t/$f — missing"
+        fi
+    done
+done
+
+# --- Template script ---
+echo ""
+echo "Template script:"
+TEMPLATE_SCRIPTS=(
+    scripts/apply-template.py
+    scripts/apply-template.sh
+)
+for f in "${TEMPLATE_SCRIPTS[@]}"; do
+    if [ -f "$PROJECT_DIR/$f" ]; then
+        pass "$f"
+    else
+        fail "$f — missing"
+    fi
+done
+
 # --- Summary ---
 echo ""
 TOTAL=$((PASS + FAIL))

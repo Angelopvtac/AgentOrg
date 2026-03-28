@@ -1,0 +1,19 @@
+{
+  "id": "saas-micro",
+  "name": "Micro-SaaS Product",
+  "description": "A focused software product solving one specific problem for a niche audience, built lean with AI-assisted development and marketed through content and community.",
+  "targetPhase": "L1",
+  "suggestedSkills": [
+    "product development",
+    "Python or JavaScript",
+    "user research",
+    "technical writing",
+    "growth marketing"
+  ],
+  "suggestedGoal": "Ship an MVP and acquire 10 paying users within 3 months",
+  "files": [
+    "direction.json",
+    "brand-brief.json",
+    "market-research.json"
+  ]
+}

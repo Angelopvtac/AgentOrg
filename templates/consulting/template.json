@@ -1,0 +1,19 @@
+{
+  "id": "consulting",
+  "name": "Consulting & Freelance Services",
+  "description": "A consulting practice offering specialized expertise to clients on a project or retainer basis, leveraging AI for research, proposal generation, and deliverable creation.",
+  "targetPhase": "L1",
+  "suggestedSkills": [
+    "domain expertise",
+    "client communication",
+    "proposal writing",
+    "project management",
+    "strategic thinking"
+  ],
+  "suggestedGoal": "Land 3 paying consulting clients within 2 months through targeted outreach",
+  "files": [
+    "direction.json",
+    "brand-brief.json",
+    "market-research.json"
+  ]
+}
