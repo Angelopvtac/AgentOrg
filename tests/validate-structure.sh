@@ -199,6 +199,20 @@ for f in "${TEMPLATE_SCRIPTS[@]}"; do
     fi
 done
 
+echo ""
+echo "Channel configuration script:"
+CHANNEL_SCRIPTS=(
+    scripts/enable-channel.py
+    scripts/enable-channel.sh
+)
+for f in "${CHANNEL_SCRIPTS[@]}"; do
+    if [ -f "$PROJECT_DIR/$f" ]; then
+        pass "$f"
+    else
+        fail "$f — missing"
+    fi
+done
+
 # --- Summary ---
 echo ""
 TOTAL=$((PASS + FAIL))

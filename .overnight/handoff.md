@@ -2,9 +2,9 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 6
+- Iteration: 7
 - Status: CONTINUE
-- Timestamp: 2026-03-28T09:30:00Z
+- Timestamp: 2026-03-28T10:15:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
@@ -29,6 +29,7 @@ This is NOT a web app with routes. It's an OpenClaw gateway with:
 - **Phase Transition Engine**: Python script that evaluates gate criteria for the current phase and transitions to the next phase when all criteria pass, with backup, state persistence, and history tracking
 - **Workflow Pipelines**: Lobster pipeline definitions in `workflows/` that codify multi-step agent workflows with triggers, steps, data flow, and success criteria
 - **Business Templates**: 3 starter templates (content-agency, saas-micro, consulting) in `templates/` with apply script to pre-seed L1 discovery data
+- **Channel Configuration**: Script to enable/disable Discord and Telegram channels in gateway config with env var validation, status reporting, and idempotent operations
 
 ### Data Models
 All data is JSON files in `knowledge/` (vault):
@@ -76,6 +77,7 @@ All data is JSON files in `knowledge/` (vault):
 9. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
 10. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
 11. **Template application flow**: `bash scripts/apply-template.sh --list` shows 3 templates → `--preview <id>` shows details → `--apply <id>` writes direction.json, brand-brief.json, and market research report to vault with timestamps → reports L1 gate progress → `--reset` clears L1 data back to empty state
+12. **Channel configuration flow**: `bash scripts/enable-channel.sh --status` shows enabled/disabled status + token detection → `--enable discord/telegram` activates the channel in gateway config (warns if token not set, shows setup URL and next steps) → `--disable discord/telegram` deactivates → idempotent operations, config integrity preserved across all operations
 
 ## File Map
 ```
@@ -111,6 +113,7 @@ smoke/3-phase-transition.test.sh — Smoke test: phase transition engine (39 che
 smoke/4-research-agent.test.sh — Smoke test: research agent workspace & integration (49 checks)
 smoke/5-workflow-definitions.test.sh — Smoke test: workflow pipeline definitions (74 checks)
 smoke/6-business-templates.test.sh — Smoke test: business templates & apply-template script (122 checks)
+smoke/7-channel-configuration.test.sh — Smoke test: channel configuration manager (61 checks)
 templates/content-agency/      — Content & Marketing Agency template (Inkwell Studio)
 templates/saas-micro/          — Micro-SaaS Product template (Shiplog)
 templates/consulting/          — AI Operations Consulting template (Practical AI Partners)
@@ -120,6 +123,8 @@ templates/*/brand-brief.json   — Pre-seeded brand brief with name, tagline, vo
 templates/*/market-research.json — Pre-seeded market research report with findings, confidence, sources, recommendations
 scripts/apply-template.sh      — Template application (bash wrapper → calls apply-template.py)
 scripts/apply-template.py      — Python script: list, preview, apply, reset business-type templates
+scripts/enable-channel.sh      — Channel configuration (bash wrapper → calls enable-channel.py)
+scripts/enable-channel.py      — Python script: enable/disable Discord/Telegram channels in gateway config
 tests/run-all.sh               — Test runner (4 validation suites + smoke tests)
 tests/validate-*.sh            — Individual validation scripts
 docker-compose.yml             — Single gateway container with volume mounts for 3 agents, security hardening
@@ -143,6 +148,7 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - **Daily Briefing Pipeline** (`workflows/daily-briefing.lobster`): Cron trigger → 8 steps: gather phase status, budget, tasks, knowledge, phase-specific context → compile → deliver to core-assistant → update briefing-state.json. Handles all phases (L0-L6) with phase-specific context blocks.
 - **Discovery Pipeline** (`workflows/discovery.lobster`): Event trigger (L1 transition) → 7 steps: profile ingestion → market scan → founder direction selection → competitive deep-dive → brand brief research → brand brief completion → L1 gate verification. Tracks gate progress (3 criteria) through vault file state. Supports pipeline resumption after interruption.
 - **Templates ↔ Vault**: `scripts/apply-template.py` reads template files from `templates/<id>/` → writes direction.json, brand-brief.json to `vault/business/`, market research to `vault/research/` with timestamps. Templates satisfy all 3 L1 gate criteria (direction-selected, brand-brief-complete, market-research-done), enabling fast-track through L1 Discovery phase. Reset mode restores vault to empty L1 state.
+- **Channel Config ↔ Gateway**: `scripts/enable-channel.py` reads/writes `config/openclaw.json` to enable/disable Discord and Telegram channel blocks. Validates env vars in `.env`, preserves all non-channel config sections. Channels use `${ENV_VAR}` token substitution resolved by Docker at runtime via `docker-compose.yml` env forwarding.
 
 ## Iteration Log
 ### Iteration 0
@@ -252,23 +258,39 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 
 ### Feature Completeness (V1 Critical Path)
 
-1. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
+1. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out in the orchestrator AGENTS.md.
 
-2. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
+2. **End-to-end integration test** — A full lifecycle test: simulate onboarding → transition L0→L1 → apply template → transition L1→L2 → verify dashboard shows L2 state. Would prove the whole progression system works as a pipeline.
 
-3. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
+3. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist. README could use a quickstart walkthrough.
 
 ### Quality & Polish
 
-4. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
+4. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a watch mode that regenerates on vault file changes.
 
 5. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
 6. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
 
+### Iteration 7
+- Built **Channel Configuration Manager** — enables/disables Discord and Telegram channels in the gateway config
+- Created `scripts/enable-channel.py` — Python script with 3 modes:
+  - `--enable <channel>`: Activates a channel in config/openclaw.json, validates env var in .env, warns if token not set with setup URL, shows next steps (token setup, container restart, platform-specific steps)
+  - `--disable <channel>`: Deactivates a channel, restores commented template when last channel disabled
+  - `--status`: Shows enabled/disabled status for all channels with masked token display
+- Created `scripts/enable-channel.sh` — bash wrapper matching existing script patterns
+- Channel management rebuilds the entire channels region on each operation for clean, consistent output
+- Supports: enable discord, enable telegram, both simultaneously, disable one while keeping other, disable all (restores original commented template)
+- Idempotent: re-enabling an enabled channel or re-disabling a disabled channel is a no-op with informative message
+- Token detection reads .env file, strips inline comments, masks displayed values
+- Config integrity: all non-channel sections (agents, tools, gateway, hooks, etc.) preserved across all operations
+- Updated `tests/validate-structure.sh`: added channel script existence checks
+- Smoke test: `smoke/7-channel-configuration.test.sh` — 61 checks across 13 phases (script structure, status modes, enable/disable operations, idempotency, token detection, error handling, config integrity, gateway coherence)
+- All 11 test suites pass (structure: 80/80, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74, business templates smoke: 122/122, channel configuration smoke: 61/61)
+
 ## Known Issues
 
-1. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
-2. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
-3. **shellcheck not installed** — Test suite skips shell linting.
-4. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.
+1. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
+2. **shellcheck not installed** — Test suite skips shell linting.
+3. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.
+4. **Channel config default state is commented** — Channels start commented out in openclaw.json but `scripts/enable-channel.sh` automates enabling/disabling. After a full disable→re-enable cycle, the commented template format differs slightly from the original (JSON-formatted vs hand-formatted) — functionally equivalent.
