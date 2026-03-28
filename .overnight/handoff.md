@@ -2,13 +2,13 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 4
+- Iteration: 5
 - Status: CONTINUE
-- Timestamp: 2026-03-28T08:00:00Z
+- Timestamp: 2026-03-28T09:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
-- Stack: OpenClaw gateway (Node.js Docker container) + JSON config/vault files + bash scripts + Python dashboard generator + Python onboarding simulator + Python phase transition engine. No frontend app — this is a configuration-driven agent framework.
+- Stack: OpenClaw gateway (Node.js Docker container) + JSON config/vault files + bash scripts + Python dashboard generator + Python onboarding simulator + Python phase transition engine + Lobster workflow definitions. No frontend app — this is a configuration-driven agent framework.
 - Run command: `docker compose up -d` (requires `openclaw:local` image pre-built)
 - Test command: `bash tests/run-all.sh`
 - Dashboard: `bash scripts/generate-dashboard.sh` → opens `dashboards/index.html`
@@ -27,6 +27,7 @@ This is NOT a web app with routes. It's an OpenClaw gateway with:
 - **Founder Dashboard**: Static HTML generated from vault data via `scripts/generate-dashboard.sh`, output to `dashboards/index.html`
 - **Onboarding Simulator**: Python script that populates vault with realistic onboarding data and evaluates L0 gate criteria programmatically
 - **Phase Transition Engine**: Python script that evaluates gate criteria for the current phase and transitions to the next phase when all criteria pass, with backup, state persistence, and history tracking
+- **Workflow Pipelines**: Lobster pipeline definitions in `workflows/` that codify multi-step agent workflows with triggers, steps, data flow, and success criteria
 
 ### Data Models
 All data is JSON files in `knowledge/` (vault):
@@ -69,8 +70,8 @@ All data is JSON files in `knowledge/` (vault):
    - Supports L0 and L1 gate evaluation (evaluators for L2-L5 can be added as system progresses)
    - Exit codes: 0 = success/gate passed, 1 = gate failed, 2 = error (terminal phase, missing config)
 6. **Onboarding flow** (L0, designed but not yet exercised live): Founder messages gateway → orchestrator routes to core-assistant → core-assistant guides through 9 sections → vault files populated → orchestrator evaluates L0 gate → transition to L1
-7. **L1 Discovery flow** (designed, not yet exercised live): After L0→L1 transition → research agent activates → reads founder profile → performs market scan → presents 3-5 directions → founder selects → competitive analysis → brand brief support → L1 gate evaluation
-8. **Daily briefing flow**: Cron triggers → orchestrator compiles from vault → sends to core-assistant → core-assistant formats for founder
+7. **L1 Discovery flow** (designed with full workflow definition): After L0→L1 transition → discovery pipeline activates per `workflows/discovery.lobster` → research agent performs market scan → presents 3-5 directions → founder selects → competitive analysis → brand brief support → L1 gate evaluation → L2 transition
+8. **Daily briefing flow** (designed with full workflow definition): Cron triggers per `workflows/daily-briefing.lobster` → orchestrator gathers phase/budget/tasks/knowledge data from vault → compiles briefing → sends to core-assistant → core-assistant formats for founder's communication style → delivers respecting quiet hours → updates briefing-state.json
 9. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
 10. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
 
@@ -81,13 +82,15 @@ config/models.json             — 3-tier model system: Haiku/Sonnet/Opus with c
 config/progression.json        — Phase definitions L0-L6 with gate criteria
 config/economics.json          — Budget rules, thresholds, per-agent allocation
 config/schemas/*.json          — JSON schemas for founder-profile, human-task, knowledge-collections
-agents/orchestrator/workspace/ — CEO agent: AGENTS.md (routing/gates/budget), BOOT.md (init), SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md, USER.md
+agents/orchestrator/workspace/ — CEO agent: AGENTS.md (routing/gates/budget/workflows), BOOT.md (init), SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md, USER.md
 agents/core-assistant/workspace/ — Founder interface: AGENTS.md (onboarding/briefing), SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md, USER.md
-agents/research/workspace/     — Market researcher (L1+): AGENTS.md (market scan/direction/brand), SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md, USER.md
+agents/research/workspace/     — Market researcher (L1+): AGENTS.md (market scan/direction/brand, refs discovery.lobster), SOUL.md, IDENTITY.md, TOOLS.md, HEARTBEAT.md, USER.md
 skills/knowledge-graph/SKILL.md     — kg_store/read/search/list across decisions/insights/lessons
 skills/human-task-queue/SKILL.md    — htq_create/list/complete/digest with priority + quiet hours
 skills/progression-engine/SKILL.md  — gate_evaluate/report/log/phase_get/transition/history
 skills/economics-engine/SKILL.md    — econ_log_cost/revenue/refund, get_treasury/burn_rate/budget_status
+workflows/daily-briefing.lobster    — 8-step pipeline: gather vault data → compile → deliver via core-assistant → update state
+workflows/discovery.lobster         — 7-step pipeline: profile → market scan → direction selection → competitive analysis → brand brief → gate verification
 knowledge/*.json               — All vault runtime state (see Data Models above)
 knowledge/research/            — Research reports directory (empty, populated by research agent in L1)
 scripts/setup.sh               — Interactive first-run setup
@@ -104,6 +107,7 @@ smoke/1-founder-dashboard.test.sh — Smoke test: dashboard generation (31 check
 smoke/2-onboarding-simulation.test.sh — Smoke test: onboarding simulation & gate evaluation (40 checks)
 smoke/3-phase-transition.test.sh — Smoke test: phase transition engine (39 checks)
 smoke/4-research-agent.test.sh — Smoke test: research agent workspace & integration (49 checks)
+smoke/5-workflow-definitions.test.sh — Smoke test: workflow pipeline definitions (74 checks)
 tests/run-all.sh               — Test runner (4 validation suites + smoke tests)
 tests/validate-*.sh            — Individual validation scripts
 docker-compose.yml             — Single gateway container with volume mounts for 3 agents, security hardening
@@ -114,6 +118,7 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - **Gateway ↔ Agents**: OpenClaw routes inbound messages to orchestrator (default agent). Orchestrator dispatches to core-assistant or research via `sessions_send`.
 - **Agent ↔ Vault**: All agents read/write JSON files in `knowledge/` directory (mounted as `/home/node/.openclaw/vault/` in container).
 - **Agent ↔ Skills**: Skills are markdown specifications (SKILL.md) defining tool interfaces. Agents follow the spec to read/write vault files — there is no code runtime; it's all prompt-driven behavior.
+- **Agent ↔ Workflows**: Workflow definitions in `workflows/*.lobster` codify multi-step agent pipelines. Orchestrator references these when coordinating cross-agent operations. Each workflow defines: trigger conditions, step sequence with agent assignments, data inputs/outputs per step, gate progress tracking, error handling, and success criteria.
 - **Config ↔ Gateway**: `config/openclaw.json` (JSON5) is mounted read-only into the container. Changes require container restart.
 - **Cron ↔ Orchestrator**: Orchestrator creates runtime cron jobs during BOOT.md execution (stored in Docker volume, not in git).
 - **Phase System**: `config/progression.json` defines gates → orchestrator evaluates via progression-engine skill → results stored in `knowledge/phase-state.json` → phase transitions unlock new agents. Now scriptable via `scripts/phase-transition.py` with gate evaluation + state update + history tracking.
@@ -123,6 +128,8 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - **Transition ↔ Vault**: `scripts/phase-transition.py` reads phase-state.json + progression.json → evaluates gate criteria for current phase → if all pass, creates backup (via backup.sh) → updates phase-state.json with new phase, start date, gate results → logs transition in history array with from/to phases and criteria snapshot. Supports L0 and L1 gate evaluators.
 - **Orchestrator ↔ Research**: Orchestrator dispatches research requests to `agent:research:main` when phase >= L1. Research agent writes reports to `vault/research/`, updates `vault/business/direction.json`, and notifies orchestrator of gate criterion completion.
 - **Research ↔ Vault**: Research agent reads `vault/founder-profile.json` for context, writes structured JSON reports to `vault/research/`, updates `vault/business/direction.json` with selected direction data. Reports follow a defined schema with findings, confidence levels, sources, and recommendations.
+- **Daily Briefing Pipeline** (`workflows/daily-briefing.lobster`): Cron trigger → 8 steps: gather phase status, budget, tasks, knowledge, phase-specific context → compile → deliver to core-assistant → update briefing-state.json. Handles all phases (L0-L6) with phase-specific context blocks.
+- **Discovery Pipeline** (`workflows/discovery.lobster`): Event trigger (L1 transition) → 7 steps: profile ingestion → market scan → founder direction selection → competitive deep-dive → brand brief research → brand brief completion → L1 gate verification. Tracks gate progress (3 criteria) through vault file state. Supports pipeline resumption after interruption.
 
 ## Iteration Log
 ### Iteration 0
@@ -189,33 +196,51 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - Smoke test: `smoke/4-research-agent.test.sh` — 49 checks across 9 phases (workspace files, AGENTS.md sections, identity/personality, tool permissions, gateway config, docker config, orchestrator integration, vault structure, progression coherence)
 - All 8 test suites pass (structure: 62/62, config: 13/13, schemas: 22/22, scripts: 45/45, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49)
 
+### Iteration 5
+- Built **Workflow Pipeline Definitions** — codifies the two core multi-agent workflows that were missing
+- Created `workflows/daily-briefing.lobster` — 8-step pipeline:
+  - Steps: gather phase status → gather budget → gather pending tasks → gather recent knowledge → gather phase-specific context (adapts per L0-L6) → compile briefing → deliver to core-assistant → update briefing-state.json
+  - Defines trigger (cron with timezone adjustment), agent assignments (orchestrator gathers, core-assistant delivers), data flow (vault inputs → compiled output), alert thresholds (80%/100%/200% budget), error handling, and success criteria
+  - Phase-specific context blocks: L0 (onboarding progress), L1 (discovery status), L2 (social metrics), L3+ (revenue/treasury)
+  - References founder communication style and quiet hours for delivery formatting
+- Created `workflows/discovery.lobster` — 7-step pipeline:
+  - Steps: founder profile ingestion → market scan → founder direction selection → competitive deep-dive → brand brief research → brand brief completion → L1 gate verification
+  - Defines trigger (event: L1 transition or research request), L1 phase guard, agent assignments (research: steps 1-2,4-5; core-assistant: steps 3,6; orchestrator: step 7)
+  - Tracks gate_progress for all 3 L1 criteria (direction-selected, brand-brief-complete, market-research-done)
+  - Includes pipeline state tracking for resumption after interruption (state tracked implicitly through vault file existence)
+  - Full research report JSON schema with findings, confidence, sources, recommendations
+  - Founder interaction protocols: comparison, rejection (loops back), partial selection
+  - Tier assignments: Tier 2 for research/scan, Tier 3 for competitive analysis and gate verification
+- Updated orchestrator AGENTS.md: added "Workflow Pipelines" section with workflow reference table linking to both .lobster files
+- Updated research agent AGENTS.md: added reference to discovery.lobster in the L1 Core Workflow section
+- Updated tests/validate-structure.sh: added workflow file existence checks for both .lobster files
+- Smoke test: `smoke/5-workflow-definitions.test.sh` — 74 checks across 10 phases (file existence, daily briefing structure, vault references, agent assignments, discovery structure, L1 gate criteria coverage, agent assignments, report format, agent integration, progression coherence)
+- All 9 test suites pass (structure: 64/64, config: 13/13, schemas: 22/22, scripts: 48/48, dashboard smoke: 31/31, onboarding smoke: 40/40, transition smoke: 39/39, research agent smoke: 49/49, workflow definitions smoke: 74/74)
+
 ## Remaining Opportunities (ranked)
 
 ### Feature Completeness (V1 Critical Path)
 
-1. **Workflow definitions** — `workflows/` dir is empty with only `.gitkeep`. The daily-briefing, discovery, and content-pipeline workflows referenced in BACKLOG are unimplemented. At minimum, a `workflows/daily-briefing.lobster` template and a `workflows/discovery.lobster` that codifies the research agent's market scan → direction → brand brief pipeline.
+1. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
 
-2. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
+2. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
 
-3. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
+3. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
 
-4. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
-
-5. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
+4. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
 
 ### Quality & Polish
 
-6. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
+5. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
 
-7. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
+6. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
-8. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
+7. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
 
 ## Known Issues
 
-1. **No workflows defined** — `workflows/` directory is empty. Lobster pipelines referenced in backlog don't exist.
-2. **No templates** — `templates/` directory is empty. Business-type templates not created.
-3. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
-4. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
-5. **shellcheck not installed** — Test suite skips shell linting.
-6. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.
+1. **No templates** — `templates/` directory is empty. Business-type templates not created.
+2. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
+3. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run. (Phase transition engine now sets the start date correctly on transition.)
+4. **shellcheck not installed** — Test suite skips shell linting.
+5. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.

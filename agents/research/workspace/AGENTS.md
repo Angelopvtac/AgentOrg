@@ -34,6 +34,9 @@ Your behavior adapts based on `currentPhase`:
 
 ## L1 Core Workflow: Market Scan → Direction Analysis → Brand Brief
 
+> Full pipeline definition: `workflows/discovery.lobster`
+> This section implements Steps 1-2 and 4-5 of the discovery pipeline.
+
 ### Step 1: Market Scan
 
 When the orchestrator dispatches a research request (or on first activation in L1):

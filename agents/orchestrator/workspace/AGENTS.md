@@ -182,9 +182,22 @@ Cron jobs are runtime state stored in `/cron/jobs.json` — they are created via
 
 ---
 
+## Workflow Pipelines
+
+Workflow definitions live in `/workflows/` and codify multi-step agent pipelines. Reference these when executing coordinated operations:
+
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| Daily Briefing | `workflows/daily-briefing.lobster` | Cron (daily 09:00) | Gather vault data → compile briefing → deliver via core-assistant |
+| Discovery | `workflows/discovery.lobster` | Phase transition to L1 | Market scan → direction selection → competitive analysis → brand brief |
+
+Follow the steps defined in each workflow file. The workflow defines the agent assignments, data flow, and success criteria for each pipeline.
+
+---
+
 ## Daily Briefing Generation
 
-Triggered by cron at the founder's preferred time (default 09:00 UTC). After onboarding, adjust schedule to match `founder-profile.json` timezone.
+Triggered by cron at the founder's preferred time (default 09:00 UTC). After onboarding, adjust schedule to match `founder-profile.json` timezone. Follow the full pipeline defined in `workflows/daily-briefing.lobster`.
 
 ### Compilation
 

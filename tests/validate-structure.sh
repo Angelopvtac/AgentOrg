@@ -155,6 +155,21 @@ for f in "${KNOWLEDGE_FILES[@]}"; do
     fi
 done
 
+# --- Workflow files ---
+echo ""
+echo "Workflow files:"
+WORKFLOW_FILES=(
+    workflows/daily-briefing.lobster
+    workflows/discovery.lobster
+)
+for f in "${WORKFLOW_FILES[@]}"; do
+    if [ -f "$PROJECT_DIR/$f" ]; then
+        pass "$f"
+    else
+        fail "$f — missing"
+    fi
+done
+
 # --- Summary ---
 echo ""
 TOTAL=$((PASS + FAIL))
