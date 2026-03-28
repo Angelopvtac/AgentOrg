@@ -33,6 +33,16 @@ run_test "Config" "$SCRIPT_DIR/validate-config.sh"
 run_test "Schemas" "$SCRIPT_DIR/validate-schemas.sh"
 run_test "Scripts" "$SCRIPT_DIR/validate-scripts.sh"
 
+# Smoke tests (if directory exists)
+SMOKE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/smoke"
+if [[ -d "$SMOKE_DIR" ]]; then
+    for smoke_test in "$SMOKE_DIR"/*.test.sh; do
+        [[ -f "$smoke_test" ]] || continue
+        test_name="Smoke: $(basename "$smoke_test" .test.sh)"
+        run_test "$test_name" "$smoke_test"
+    done
+fi
+
 TOTAL=$((TOTAL_PASS + TOTAL_FAIL))
 echo ""
 echo -e "${BOLD}========================================="

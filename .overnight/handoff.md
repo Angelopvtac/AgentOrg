@@ -2,15 +2,16 @@
 
 ## Meta
 - Goal: get this to v1
-- Iteration: 0
+- Iteration: 1
 - Status: CONTINUE
-- Timestamp: 2026-03-28T04:30:00Z
+- Timestamp: 2026-03-28T05:00:00Z
 - Branch: overnight/AgentOrg/2026-03-28
 
 ## App State
-- Stack: OpenClaw gateway (Node.js Docker container) + JSON config/vault files + bash scripts. No frontend app — this is a configuration-driven agent framework.
+- Stack: OpenClaw gateway (Node.js Docker container) + JSON config/vault files + bash scripts + Python dashboard generator. No frontend app — this is a configuration-driven agent framework.
 - Run command: `docker compose up -d` (requires `openclaw:local` image pre-built)
 - Test command: `bash tests/run-all.sh`
+- Dashboard: `bash scripts/generate-dashboard.sh` → opens `dashboards/index.html`
 - Port: 18791 (gateway API), 18792 (bridge)
 
 ## What Exists
@@ -21,6 +22,7 @@ This is NOT a web app with routes. It's an OpenClaw gateway with:
 - Two registered agents: `orchestrator` (default, receives all inbound), `core-assistant`
 - Agent-to-agent messaging via `sessions_send` with target `agent:<id>:main`
 - Channel templates (Discord, Telegram) commented out in config
+- **Founder Dashboard**: Static HTML generated from vault data via `scripts/generate-dashboard.sh`, output to `dashboards/index.html`
 
 ### Data Models
 All data is JSON files in `knowledge/` (vault):
@@ -44,10 +46,11 @@ All data is JSON files in `knowledge/` (vault):
 ### User Flows
 1. **Setup flow**: Founder runs `scripts/setup.sh` → checks prereqs → creates .env → generates gateway token → validates API key → starts Docker container
 2. **Health check flow**: `scripts/health-check.sh` validates container, gateway, API keys, config, agent workspaces, vault files, skills
-3. **Onboarding flow** (L0, designed but not yet exercised): Founder messages gateway → orchestrator routes to core-assistant → core-assistant guides through 9 sections (welcome, personal, skills, availability, financial, goals, preferences, vision, review) → vault files populated → orchestrator evaluates L0 gate → transition to L1
-4. **Daily briefing flow**: Cron triggers → orchestrator compiles from vault → sends to core-assistant → core-assistant formats for founder
-5. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
-6. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
+3. **Dashboard flow**: Founder runs `bash scripts/generate-dashboard.sh` → reads all vault JSON → generates `dashboards/index.html` → opens in browser. Shows phase status, gate progress, onboarding progress, budget, treasury, human tasks, knowledge entries, briefing status. Handles both empty state (fresh install) and populated state (mid-onboarding).
+4. **Onboarding flow** (L0, designed but not yet exercised): Founder messages gateway → orchestrator routes to core-assistant → core-assistant guides through 9 sections (welcome, personal, skills, availability, financial, goals, preferences, vision, review) → vault files populated → orchestrator evaluates L0 gate → transition to L1
+5. **Daily briefing flow**: Cron triggers → orchestrator compiles from vault → sends to core-assistant → core-assistant formats for founder
+6. **Budget enforcement flow**: Cost logged → daily-budget updated → thresholds checked → warn at 80%, pause at 100%, kill-switch at 200%
+7. **Backup flow**: `scripts/backup.sh` creates timestamped tar.gz of knowledge + config + workspaces
 
 ## File Map
 ```
@@ -66,7 +69,11 @@ knowledge/*.json               — All vault runtime state (see Data Models abov
 scripts/setup.sh               — Interactive first-run setup
 scripts/health-check.sh        — System health verification
 scripts/backup.sh              — Timestamped backup of knowledge/config/workspaces
-tests/run-all.sh               — Test runner (4 suites: structure, config, schemas, scripts)
+scripts/generate-dashboard.sh  — Dashboard generator (bash wrapper → calls generate-dashboard.py)
+scripts/generate-dashboard.py  — Python script that reads vault JSON and outputs dashboards/index.html
+dashboards/index.html          — Generated founder status dashboard (static HTML, regenerate with scripts/generate-dashboard.sh)
+smoke/1-founder-dashboard.test.sh — Smoke test: dashboard generation with empty and populated vault data (31 checks)
+tests/run-all.sh               — Test runner (4 validation suites + smoke tests)
 tests/validate-*.sh            — Individual validation scripts
 docker-compose.yml             — Single gateway container with volume mounts, security hardening
 BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, tasks with status)
@@ -80,6 +87,7 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - **Cron ↔ Orchestrator**: Orchestrator creates runtime cron jobs during BOOT.md execution (stored in Docker volume, not in git).
 - **Phase System**: `config/progression.json` defines gates → orchestrator evaluates via progression-engine skill → results stored in `knowledge/phase-state.json` → phase transitions unlock new agents.
 - **Budget Enforcement**: Economics engine logs costs → updates daily-budget → orchestrator heartbeat checks thresholds → alerts/pauses via core-assistant.
+- **Dashboard ↔ Vault**: `scripts/generate-dashboard.py` reads all vault JSON files + `config/progression.json` → evaluates gate criteria in Python → generates self-contained HTML. No server needed; static file opened in browser.
 
 ## Iteration Log
 ### Iteration 0
@@ -90,11 +98,22 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 - No frontend/dashboard exists — the project is a configuration-driven agent framework
 - All vault files are initialized with empty/null values (fresh install state)
 
+### Iteration 1
+- Built **Founder Dashboard** — the #1 V1 priority
+- Created `scripts/generate-dashboard.sh` (bash wrapper) + `scripts/generate-dashboard.py` (Python generator)
+- Dashboard reads all vault JSON files and generates a self-contained `dashboards/index.html`
+- Displays: phase status with L0-L6 timeline, gate progress (evaluates 6 criteria in Python), onboarding section grid (9 sections), daily budget with bar chart and tier breakdown, treasury overview, human tasks list with priority badges, knowledge graph entries (decisions/insights/lessons), daily briefing status
+- Handles both empty state (fresh install — all sections show appropriate "no data" messages) and populated state (realistic mid-onboarding data renders correctly)
+- Dark theme, responsive design (mobile 375px to desktop 1440px), proper visual hierarchy
+- Smoke test: `smoke/1-founder-dashboard.test.sh` — 31 checks across 3 phases (empty state, populated state, error handling)
+- Updated `tests/run-all.sh` to auto-discover and run smoke tests from `smoke/` directory
+- All 5 test suites pass (structure: 56/56, config: 16/16, schemas: 22/22, scripts: 24/24, smoke: 31/31)
+
 ## Remaining Opportunities (ranked)
 
 ### Feature Completeness (V1 Critical Path)
 
-1. **Founder dashboard (HTML)** — `dashboards/` dir is empty. V1 needs at minimum a status dashboard showing: current phase, gate progress, budget status, pending tasks, recent knowledge entries. This is the founder's primary visibility into the system outside of chat.
+1. **Onboarding simulation test** — A script that simulates the onboarding flow by writing valid data to all vault files and verifying the L0 gate would pass. Proves the data flow works end-to-end without needing the actual OpenClaw gateway running. Critical for V1 confidence.
 
 2. **L0→L1 transition implementation** — Backlog F3.1-S3 is "planned". The gate evaluation logic is defined in agent prompts but there's no integration test proving the full flow works: onboarding completes → gate evaluates → phase transitions → new agents unlock. Need a simulation/test script.
 
@@ -102,35 +121,31 @@ BACKLOG.md                     — Full product backlog (Epics 1-11+, stories, t
 
 4. **Workflow definitions** — `workflows/` dir is empty with only `.gitkeep`. The daily-briefing, discovery, and content-pipeline workflows referenced in BACKLOG are unimplemented. At minimum, a `workflows/daily-briefing.lobster` template.
 
-5. **Dashboard: founder status page** — A single-page HTML dashboard (no framework needed) that reads vault JSON files and displays: phase status, gate progress bar, budget gauge, pending tasks count, onboarding progress, recent decisions/insights. Serve from `dashboards/index.html`.
+5. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
 
-6. **Onboarding simulation test** — A script that simulates the onboarding flow by writing valid data to all vault files and verifying the L0 gate would pass. Proves the data flow works end-to-end without needing the actual OpenClaw gateway running.
+6. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
 
-7. **Channel configuration templates** — Discord/Telegram configs are commented out in openclaw.json. V1 should have a `scripts/enable-channel.sh` helper that uncomments and configures a channel with guided prompts.
+7. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
 
-8. **Knowledge graph propagation** — Backlog F4.1-S2: "insights propagate to relevant agents automatically" is planned. V1 needs at least the notification mechanism spec'd out.
-
-9. **Template business types** — `templates/` dir is empty. V1 should include at least 2-3 starter templates (e.g., content-agency, saas-micro, consulting) that pre-seed business direction and brand brief for faster L1 completion.
-
-10. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
+8. **Documentation completeness** — CONTRIBUTING.md exists but could use expansion. No architecture decision records exist.
 
 ### Quality & Polish
 
-11. **Smoke test for gateway integration** — Test that `docker compose up` actually starts, health endpoint responds, and basic API calls work (requires openclaw:local image).
+9. **Dashboard auto-refresh** — Currently requires manual re-run of the generator script. Could add a cron hook or a watch mode.
 
-12. **Vault backup before phase transitions** — Automatic backup trigger when phase changes (safety net).
+10. **Vault backup before phase transitions** — Automatic backup trigger when phase changes (safety net).
 
-13. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
+11. **Schema validation on vault writes** — Currently schemas exist in `config/schemas/` but there's no validation enforced when agents write to vault files.
 
-14. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
+12. **SECURITY.md improvements** — Exists but could document the actual threat model (agent-to-agent trust, vault integrity, prompt injection defenses).
 
 ## Known Issues
 
-1. **No dashboard exists** — `dashboards/` directory contains only `.gitkeep`. Founder has no visual interface for system status outside of chat.
-2. **No workflows defined** — `workflows/` directory is empty. Lobster pipelines referenced in backlog don't exist.
-3. **No templates** — `templates/` directory is empty. Business-type templates not created.
-4. **Onboarding never tested end-to-end** — The 9-section onboarding flow and L0 gate evaluation have never been exercised with real or simulated data.
-5. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
-6. **No smoke test infrastructure for integration tests** — The existing test suite validates file structure and JSON validity, but doesn't test actual gateway behavior or agent interactions.
-7. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run.
-8. **shellcheck not installed** — Test suite skips shell linting.
+1. **No workflows defined** — `workflows/` directory is empty. Lobster pipelines referenced in backlog don't exist.
+2. **No templates** — `templates/` directory is empty. Business-type templates not created.
+3. **Onboarding never tested end-to-end** — The 9-section onboarding flow and L0 gate evaluation have never been exercised with real or simulated data.
+4. **Channel configuration commented out** — Discord/Telegram configs exist as comments in openclaw.json but no automation to enable them.
+5. **No smoke test infrastructure for integration tests** — The existing test suite validates file structure and JSON validity, but doesn't test actual gateway behavior or agent interactions.
+6. **Phase start date is hardcoded** — `phase-state.json` has `phaseStartDate: "2026-02-23T00:00:00Z"` which should be set dynamically by BOOT.md on first run.
+7. **shellcheck not installed** — Test suite skips shell linting.
+8. **Dashboard is static** — Must be manually regenerated to see current state. No live-refresh mechanism.

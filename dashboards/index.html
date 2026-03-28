@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentOrg &mdash; Founder Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #141416;
+    --surface-2: #1c1c20;
+    --border: #27272b;
+    --border-subtle: #1e1e22;
+    --text: #ececee;
+    --text-muted: #8b8b94;
+    --text-dim: #56565e;
+    --accent: #6366f1;
+    --accent-soft: rgba(99, 102, 241, 0.12);
+    --green: #22c55e;
+    --green-soft: rgba(34, 197, 94, 0.12);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --red: #ef4444;
+    --red-soft: rgba(239, 68, 68, 0.12);
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 20px 16px; }
+  }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .header .meta {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .refresh-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* Phase Banner */
+  .phase-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .phase-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+
+  .phase-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+  }
+
+  .phase-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 600px;
+  }
+
+  .phase-meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .phase-timeline {
+    display: flex;
+    gap: 2px;
+    margin-top: 20px;
+  }
+
+  .phase-dot {
+    height: 4px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--border);
+  }
+
+  .phase-dot.active { background: var(--accent); }
+  .phase-dot.completed { background: var(--green); }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  /* Gate Criteria */
+  .criteria-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .criteria-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .criteria-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    margin-top: 1px;
+  }
+
+  .criteria-icon.pass {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .criteria-icon.fail {
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .criteria-desc { color: var(--text-muted); }
+  .criteria-item.pass .criteria-desc { color: var(--text); }
+
+  /* Onboarding */
+  .onboarding-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    .onboarding-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .onboarding-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .onboarding-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot.pending { background: var(--text-dim); }
+  .dot.in-progress { background: var(--amber); }
+  .dot.complete { background: var(--green); }
+
+  .onboarding-item .label { color: var(--text-muted); }
+  .onboarding-item.complete .label { color: var(--text); }
+
+  /* Budget */
+  .budget-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .budget-amount {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .budget-limit {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .budget-bar-container {
+    background: var(--surface-2);
+    border-radius: 4px;
+    height: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .budget-bar {
+    height: 100%;
+    border-radius: 4px;
+    min-width: 0;
+  }
+
+  .budget-breakdown {
+    display: flex;
+    gap: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+  }
+
+  .budget-tier {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .budget-tier span { color: var(--text-muted); }
+
+  /* Treasury */
+  .treasury-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+  }
+
+  .treasury-row + .treasury-row {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .treasury-label {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .treasury-value {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .treasury-value.positive { color: var(--green); }
+  .treasury-value.negative { color: var(--red); }
+  .treasury-value.neutral { color: var(--text); }
+
+  /* Tasks */
+  .tasks-empty {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    font-size: 13px;
+  }
+
+  .task-item + .task-item {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .task-priority {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-top: 2px;
+  }
+
+  .task-priority.critical { background: var(--red-soft); color: var(--red); }
+  .task-priority.high { background: var(--amber-soft); color: var(--amber); }
+  .task-priority.medium { background: var(--accent-soft); color: var(--accent); }
+  .task-priority.low { background: var(--surface-2); color: var(--text-dim); }
+
+  .task-title { color: var(--text); }
+  .task-desc { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+
+  /* Knowledge */
+  .knowledge-section { margin-bottom: 24px; }
+
+  .knowledge-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .knowledge-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .knowledge-empty {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .knowledge-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+
+  .knowledge-entry-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .knowledge-entry-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* Briefing */
+  .briefing-status {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .briefing-status .value {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Full-width card */
+  .card.full { grid-column: 1 / -1; }
+
+  /* Footer */
+  .footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <div>
+      <h1>AgentOrg</h1>
+      <div class="refresh-hint">bash scripts/generate-dashboard.sh</div>
+    </div>
+    <div class="meta">March 28, 2026 at 04:15</div>
+  </header>
+
+  <div class="phase-banner">
+    <div class="phase-label">Phase L0</div>
+    <div class="phase-name">Onboarding</div>
+    <div class="phase-desc">Initial setup — founder completes profile, defines vision, system is configured.</div>
+    <div class="phase-meta">Started 2026-02-23</div>
+    <div class="phase-timeline">
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div>
+      <div class="phase-dot"></div>
+      <div class="phase-dot"></div>
+      <div class="phase-dot"></div>
+      <div class="phase-dot"></div>
+      <div class="phase-dot"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-title">Gate Progress &mdash; 0/6 criteria met</div>
+      <ul class="criteria-list">
+        <li class="criteria-item"><span class="criteria-icon fail"></span><span class="criteria-desc">Founder profile has all required fields populated</span></li>
+        <li class="criteria-item"><span class="criteria-icon fail"></span><span class="criteria-desc">At least 3 founder skills/interests documented</span></li>
+        <li class="criteria-item"><span class="criteria-icon fail"></span><span class="criteria-desc">Weekly hours and quiet hours are defined</span></li>
+        <li class="criteria-item"><span class="criteria-icon fail"></span><span class="criteria-desc">Daily budget confirmed and risk tolerance set</span></li>
+        <li class="criteria-item"><span class="criteria-icon fail"></span><span class="criteria-desc">Vision statement exists with at least 2 sentences</span></li>
+        <li class="criteria-item"><span class="criteria-icon fail"></span><span class="criteria-desc">All 9 onboarding sections marked complete</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Onboarding &mdash; 0/9 sections complete</div>
+      <div class="onboarding-grid">
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Welcome</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Personal</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Skills</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Availability</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Financial</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Goals</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Preferences</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Vision</span></div>
+        <div class="onboarding-item "><span class="dot pending"></span><span class="label">Review</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daily Budget</div>
+      <div class="budget-stats">
+        <div class="budget-amount">$0.00</div>
+        <div class="budget-limit">of $5.00 limit</div>
+      </div>
+      <div class="budget-bar-container">
+        <div class="budget-bar" style="width: 0.0%; background: var(--accent);"></div>
+      </div>
+      <div class="budget-breakdown">
+        <div class="budget-tier">T1 Triage <span>$0.00</span></div>
+        <div class="budget-tier">T2 Execution <span>$0.00</span></div>
+        <div class="budget-tier">T3 Strategic <span>$0.00</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Treasury</div>
+      <div class="treasury-row">
+        <span class="treasury-label">Balance</span>
+        <span class="treasury-value neutral">$0.00</span>
+      </div>
+      <div class="treasury-row">
+        <span class="treasury-label">Total Revenue</span>
+        <span class="treasury-value neutral">$0.00</span>
+      </div>
+      <div class="treasury-row">
+        <span class="treasury-label">Total Costs</span>
+        <span class="treasury-value neutral">$0.00</span>
+      </div>
+      <div class="treasury-row">
+        <span class="treasury-label">Revenue / Expense</span>
+        <span class="treasury-value neutral">0x</span>
+      </div>
+    </div>
+
+    <div class="card full">
+      <div class="card-title">Human Tasks</div>
+      <div class="tasks-empty">No pending tasks<br><span style="font-size: 11px;">Created: 0 | Completed: 0</span></div>
+    </div>
+
+  </div>
+
+  <div class="knowledge-section">
+    <div class="knowledge-header"><div class="card-title" style="margin-bottom: 0;">Decisions</div><div class="knowledge-count">0 entries</div></div>
+    <div class="knowledge-empty">No decisions recorded yet</div>
+    <div style="margin-bottom: 20px;"></div>
+    <div class="knowledge-header"><div class="card-title" style="margin-bottom: 0;">Insights</div><div class="knowledge-count">0 entries</div></div>
+    <div class="knowledge-empty">No insights recorded yet</div>
+    <div style="margin-bottom: 20px;"></div>
+    <div class="knowledge-header"><div class="card-title" style="margin-bottom: 0;">Lessons</div><div class="knowledge-count">0 entries</div></div>
+    <div class="knowledge-empty">No lessons recorded yet</div>
+    <div style="margin-bottom: 20px;"></div>
+  </div>
+
+  <div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Daily Briefing</div>
+    <div class="briefing-status">Last sent: <span class="value">Never sent (0 total)</span></div>
+  </div>
+
+  <footer class="footer">
+    <span>AgentOrg v0.3.0 &middot; Phase L0</span>
+    <span>2026-03-28T02:15:27Z</span>
+  </footer>
+
+</div>
+</body>
+</html>
